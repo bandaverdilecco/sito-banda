@@ -1,0 +1,9 @@
+{
+  "name": "filarmonica-verdi-lecco",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}
