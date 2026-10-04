@@ -1,11 +1,12 @@
 // Anteprima locale dei file in public/. Non richiede pacchetti npm.
 import { createServer } from "node:http";
+import { watch } from "node:fs";
 import { readFile, realpath, stat } from "node:fs/promises";
-import { networkInterfaces } from "node:os";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { renderPage } from "./render.mjs";
+import { generateAlbumPages, loadAlbums } from "./albums.mjs";
 
 const { values } = parseArgs({
   options: {
@@ -40,6 +41,35 @@ const redirects = new Map(
     .map((line) => line.split(/\s+/).slice(0, 2)),
 );
 
+// Solo nell’anteprima: aggiorna le pagine aperte quando si salva un JSON.
+const reloadClients = new Set();
+let reloadTimer;
+const dataWatcher = watch(new URL("../data/", import.meta.url), (_, filename) => {
+  if (filename && String(filename) !== "albums.json") return;
+  clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(async () => {
+    try {
+      await loadAlbums();
+      for (const client of reloadClients) client.write("data: reload\n\n");
+    } catch (error) {
+      console.error(`JSON non valido, anteprima conservata: ${error.message}`);
+    }
+  }, 250);
+});
+dataWatcher.on("error", error => console.error(`Aggiornamento automatico: ${error.message}`));
+const withAutoReload = html => html.replace("</body>", `<script>
+  (() => {
+    let updates;
+    const connect = () => {
+      updates = new EventSource('/__dev/album-updates');
+      updates.onmessage = () => location.reload();
+    };
+    connect();
+    window.addEventListener('pagehide', () => updates.close());
+    window.addEventListener('pageshow', event => { if (event.persisted) connect(); });
+  })();
+</script></body>`);
+
 const server = createServer(async (request, response) => {
   if (!["GET", "HEAD"].includes(request.method)) {
     response.writeHead(405, { Allow: "GET, HEAD" }).end();
@@ -48,6 +78,16 @@ const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, "http://localhost");
     const pathname = decodeURIComponent(url.pathname);
+    if (pathname === "/__dev/album-updates") {
+      response.writeHead(200, {
+        "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive",
+      });
+      if (request.method === "HEAD") { response.end(); return; }
+      response.write(": connected\n\n");
+      reloadClients.add(response);
+      response.on("close", () => reloadClients.delete(response));
+      return;
+    }
     const redirect = redirects.get(pathname.replace(/\/$/, ""));
     if (redirect) {
       const hashIndex = redirect.indexOf("#");
@@ -55,6 +95,25 @@ const server = createServer(async (request, response) => {
       const hash = hashIndex < 0 ? "" : redirect.slice(hashIndex);
       const query = url.search && target.includes("?") ? "&" + url.search.slice(1) : url.search;
       response.writeHead(301, { Location: target + query + hash }).end();
+      return;
+    }
+    const albumPath = pathname.slice(1);
+    if (albumPath === "foto.html" || /^foto\/[a-z0-9-]+\.html$/.test(albumPath)) {
+      let pages;
+      try {
+        pages = await generateAlbumPages(albumPath);
+      } catch (error) {
+        console.error(error.message);
+        response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+        response.end(request.method === "HEAD" ? undefined : "Impossibile generare la galleria. Controlla i dati degli album e il terminale.");
+        return;
+      }
+      if (!pages.has(albumPath)) throw new Error("Album non trovato");
+      const body = Buffer.from(withAutoReload(await renderPage(pages.get(albumPath), resolve(root, albumPath), root)));
+      response.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8", "Content-Length": body.length, "Cache-Control": "no-store",
+      });
+      response.end(request.method === "HEAD" ? undefined : body);
       return;
     }
     let filename = resolve(root, "." + pathname);
@@ -65,7 +124,7 @@ const server = createServer(async (request, response) => {
     }
     let body = await readFile(filename);
     if (extname(filename) === ".html") {
-      body = Buffer.from(await renderPage(body.toString("utf8"), filename, root));
+      body = Buffer.from(withAutoReload(await renderPage(body.toString("utf8"), filename, root)));
     }
     response.writeHead(200, {
       "Content-Type": mimeTypes[extname(filename)],
@@ -82,26 +141,13 @@ const server = createServer(async (request, response) => {
 });
 
 server.on("error", (error) => {
+  dataWatcher.close();
   console.error(error.message);
   process.exitCode = 1;
 });
-server.listen(port, values.ip, () => {
-  const address = server.address().address;
-  if (address === "0.0.0.0" || address === "::") {
-    console.log(`Su questo computer: http://127.0.0.1:${port}`);
-    const localAddresses = new Set();
-    for (const [name, interfaces] of Object.entries(networkInterfaces())) {
-      if (/^(docker|veth|br-|virbr|vmnet|vboxnet|tun|tap|wg|tailscale|utun|cni|podman)/i.test(name)) continue;
-      for (const entry of interfaces || []) {
-        if (!entry.internal && entry.family === "IPv4") localAddresses.add(entry.address);
-      }
-    }
-    for (const localAddress of localAddresses) {
-      console.log(`Nella rete locale: http://${localAddress}:${port}`);
-    }
-  } else {
-    const host = address.includes(":") ? `[${address}]` : address;
-    console.log(`Sito: http://${host}:${port}`);
-  }
-  console.log("Modifica i file in public/ e aggiorna il browser. Ctrl+C per uscire.");
+server.on("close", () => {
+  dataWatcher.close();
+  clearTimeout(reloadTimer);
+  for (const client of reloadClients) client.end();
 });
+server.listen(port, values.ip);

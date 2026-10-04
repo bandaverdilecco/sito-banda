@@ -1,0 +1,602 @@
+{
+  "albums": [
+    {
+      "slug": "20260613-brunino-marco",
+      "title": "Brunino",
+      "date": "2026-06",
+      "description": "Brunino · Foto di Marco",
+      "folder": "https://drive.google.com/drive/folders/1V8cC4KfERI6uYq8r-JGhhRCvCOvs80B6?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/18RkrAxq_dqWWjXYQsEGLYLDDEisxE5T8/view"
+    },
+    {
+      "slug": "20251205-san-nicolo",
+      "title": "San Nicolò",
+      "date": "2025-12",
+      "description": "",
+      "folder": "https://drive.google.com/drive/folders/1wFFnnNufPkfgA-9nC_kbHLcs2vGvnt4e?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1BpN8bjcl3z-6lXLFyFALroScCdaqLjKo/view"
+    },
+    {
+      "slug": "20251123-santa-cecilia",
+      "title": "Santa Cecilia",
+      "date": "2025-11",
+      "description": "",
+      "folder": "https://drive.google.com/drive/folders/15JOPguD1VZnJ0z0YTOEkW3uOU_3iMsde?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1TY6BR3GfY9QQBeayhnoJdlaHGC_qyNIS/view"
+    },
+    {
+      "slug": "20250926-scuole-david",
+      "title": "Nelle scuole",
+      "date": "2025-09",
+      "description": "Foto di David",
+      "folder": "https://drive.google.com/drive/folders/1FQkGaKLLsjqlaiB5Y4YgjKb66as9Mu5l?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1d2SzQkm_LRU48gX4IqrhlF6kmRVeDeVT/view"
+    },
+    {
+      "slug": "202509-pronti-settembre-via",
+      "title": "Pronti, settembre, via!",
+      "date": "2025-09",
+      "description": "",
+      "folder": "https://drive.google.com/drive/folders/1OBf1adsm5mDYkmGLmtFQl0RJu7Tg7PNo?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/16rEpcHeBmaXL1TCTAJnz7jU2hcYUJASj/view"
+    },
+    {
+      "slug": "20250927-open-day-giulia",
+      "title": "Open day",
+      "date": "2025-09",
+      "description": "Foto di Giulia",
+      "folder": "https://drive.google.com/drive/folders/1Kncg0j6gLbZ2FT77uEngRKlkV76tUiIX?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1YWCpmy51Ak7rrI90HdEPlLWcJ8hcgBJy/view"
+    },
+    {
+      "slug": "20250602-seregno",
+      "title": "Seregno",
+      "date": "2025-06",
+      "description": "Seregno",
+      "folder": "https://drive.google.com/drive/folders/1pI_ph4BSu3N0teIba9EvSE-EzOwsFPdo?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/10DkcM2IRWlezVnKL3Q2GHsUnueum3lox/view"
+    },
+    {
+      "slug": "20250308-carnevalone-melgrati",
+      "title": "Carnevalone",
+      "date": "2025-03",
+      "description": "Lecco · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1yo6hgpGKjuFFTT5i-6SiYV2jakaOV46e?usp=drive_link",
+      "cover": "assets/foto/01-20250308-carnevalone-melgrati.jpg",
+      "coverAlt": "Carnevalone a Lecco",
+      "coverPosition": "0% 80%"
+    },
+    {
+      "slug": "20250308-carnevalone-autori-vari",
+      "title": "Carnevalone",
+      "date": "2025-03",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1cG_WLpDWcbOTjn28ml3ZmvoQyxIUkSvw?usp=drive_link",
+      "cover": "assets/foto/02-20250308-carnevalone-autori-vari.jpg",
+      "coverAlt": "Carnevalone a Lecco",
+      "coverPosition": "50% 0%"
+    },
+    {
+      "slug": "20250302-lecco-giornali",
+      "title": "Consegna delle chiavi",
+      "date": "2025-03",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1ugg7MISHP4bN1GATrXGXj6zxlVj9TxIf?usp=drive_link",
+      "cover": "assets/foto/03-20250302-lecco-giornali.jpg",
+      "coverAlt": "Consegna delle chiavi a Lecco",
+      "coverPosition": "40% -40%"
+    },
+    {
+      "slug": "20250223-san-giovanni",
+      "title": "San Giovanni",
+      "date": "2025-02",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/1-1TuqogBH9BXjpNZtk9LKm5n1kUXcUzn?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1-n2ZPj6622j6T9XMOT-7fssF5if49kGk/view"
+    },
+    {
+      "slug": "20241125-caprino-bergamasco-organizzazione",
+      "title": "200 anni dalla nascita di A. Ghislanzoni",
+      "date": "2024-11",
+      "description": "Caprino Bergamasco",
+      "folder": "https://drive.google.com/drive/folders/1WWOcm5TackaOQ-KujwX4UejVzdpNQMkk?usp=drive_link",
+      "cover": "assets/foto/04-20241125-caprino-bergamasco-organizzazione.jpg",
+      "coverAlt": "200° nascita A. Ghislanzoni a Caprino Bergamasco",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20241125-caprino-bergamasco-bucella",
+      "title": "200 anni dalla nascita di A. Ghislanzoni",
+      "date": "2024-11",
+      "description": "Caprino Bergamasco · Foto di Matteo Bucella",
+      "folder": "https://drive.google.com/drive/folders/11PCV8pMG-bf-vTx6FtJbLiDfdGahfTPg?usp=drive_link",
+      "cover": "assets/foto/05-20241125-caprino-bergamasco-bucella.jpg",
+      "coverAlt": "200° nascita A. Ghislanzoni a Caprino Bergamasco",
+      "coverPosition": "35% 10%"
+    },
+    {
+      "slug": "20241019-milano-melgrati",
+      "title": "Bande in festival",
+      "date": "2024-10",
+      "description": "Milano · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1Crit9o_Y7gYIpHC5tadde0ZSff9irOR5?usp=drive_link",
+      "cover": "assets/foto/06-20241019-milano-melgrati.jpg",
+      "coverAlt": "Bande in festival a Milano",
+      "coverPosition": "25% 30%"
+    },
+    {
+      "slug": "20241019-milano-bucella",
+      "title": "Bande in festival",
+      "date": "2024-10",
+      "description": "Milano · Foto di Matteo Bucella",
+      "folder": "https://drive.google.com/drive/folders/1eDAb41kzM2Hz90MFcUIz0pJ7M0nsc-UN?usp=drive_link",
+      "cover": "assets/foto/07-20241019-milano-bucella.jpg",
+      "coverAlt": "Bande in festival a Milano",
+      "coverPosition": "0% 80%"
+    },
+    {
+      "slug": "20240928-open-day-mandelli",
+      "title": "Open day",
+      "date": "2024-09",
+      "description": "San Giovanni · Foto di Arianna Mandelli",
+      "folder": "https://drive.google.com/drive/folders/12b9sY6nZ-P1CRpJLbGC5i1KFZaSGV26l?usp=drive_link",
+      "cover": "assets/foto/08-20240928-open-day-mandelli.jpg",
+      "coverAlt": "Open day a San Giovanni",
+      "coverPosition": "45% 0%"
+    },
+    {
+      "slug": "20240922-san-giovanni-mariani",
+      "title": "Festa di San Giovanni",
+      "date": "2024-09",
+      "description": "San Giovanni · Foto di Mauro Mariani",
+      "folder": "https://drive.google.com/drive/folders/1ReXRYqfvtCQUlZjp5O06ZseO2bFsspYy?usp=drive_link",
+      "cover": "assets/foto/09-20240922-san-giovanni-mariani.jpg",
+      "coverAlt": "Festa di San Giovanni a San Giovanni",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20240921-primaluna-melgrati",
+      "title": "100 anni della banda di Cortabbio",
+      "date": "2024-09",
+      "description": "Primaluna · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1bm3J46hjA5yyXkAr7ENaCzXOiDKvjhLp?usp=drive_link",
+      "cover": "assets/foto/10-20240921-primaluna-melgrati.jpg",
+      "coverAlt": "100° banda di Cortabbio a Primaluna",
+      "coverPosition": "0% 60%"
+    },
+    {
+      "slug": "20240707-bonacina-melgrati",
+      "title": "70 anni degli Alpini di Bonacina",
+      "date": "2024-07",
+      "description": "Bonacina · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1I9ZAtY4eLkTY7b6OyDwD_Y_53w_xY790?usp=drive_link",
+      "cover": "assets/foto/11-20240707-bonacina-melgrati.jpg",
+      "coverAlt": "70° alpini di Bonacina a Bonacina",
+      "coverPosition": "0% 80%"
+    },
+    {
+      "slug": "20240707-bonacina-lecconotizie",
+      "title": "70 anni degli Alpini di Bonacina",
+      "date": "2024-07",
+      "description": "Bonacina · Foto di LeccoNotizie",
+      "folder": "https://drive.google.com/drive/folders/1TePXQz3nmfkjZyvPRhqjdnLoE5Mutr-o?usp=drive_link",
+      "cover": "assets/foto/12-20240707-bonacina-lecconotizie.jpg",
+      "coverAlt": "70° alpini di Bonacina a Bonacina",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20240526-varenna-melgrati",
+      "title": "L'opera per tutti",
+      "date": "2024-05",
+      "description": "Varenna · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/18DlGSSLq8phfke7lLS154hh0abvphFk3?usp=drive_link",
+      "cover": "assets/foto/13-20240526-varenna-melgrati.jpg",
+      "coverAlt": "L'opera per tutti a Varenna",
+      "coverPosition": "0% 30%"
+    },
+    {
+      "slug": "20240425-carenno-melgrati",
+      "title": "XXV aprile",
+      "date": "2024-04",
+      "description": "Carenno · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1xFmj1QR7-I0jXVPWd4OnQ0jAvoB5I2NW?usp=drive_link",
+      "cover": "assets/foto/14-20240425-carenno-melgrati.jpg",
+      "coverAlt": "XXV aprile a Carenno",
+      "coverPosition": "20% 0%"
+    },
+    {
+      "slug": "20240217-carnevalone-melgrati",
+      "title": "Carnevalone",
+      "date": "2024-02",
+      "description": "Lecco · Foto di Oscar Melgrati",
+      "folder": "https://drive.google.com/drive/folders/1_7fWKrCgaWT7RBiGpYQ12SuyPnQN1LoS?usp=drive_link",
+      "cover": "assets/foto/15-20240217-carnevalone-melgrati.jpg",
+      "coverAlt": "Carnevalone a Lecco",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20231119-santa-cecilia-meinardi",
+      "title": "Santa Cecilia",
+      "date": "2023-11",
+      "description": "San Giovanni · Foto di Stefano Meinardi",
+      "folder": "https://drive.google.com/drive/folders/1mZbBrDbgrvJKghSdIisXbCKx7E0Qjx3t?usp=drive_link",
+      "cover": "assets/foto/16-20231119-santa-cecilia-meinardi.jpg",
+      "coverAlt": "Santa Cecilia a San Giovanni",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20230507-varenna",
+      "title": "Opera spettacolare",
+      "date": "2023-05",
+      "description": "Varenna",
+      "folder": "https://drive.google.com/drive/folders/1FKFN3CNutVOqvtenPrQ0UNT0EQ8Y0mit?usp=drive_link",
+      "cover": "assets/foto/17-20230507-varenna.jpg",
+      "coverAlt": "Opera spettacolare a Varenna",
+      "coverPosition": "100% 0%"
+    },
+    {
+      "slug": "20220612-villa-gomes",
+      "title": "Aida 150 anni",
+      "date": "2022-06",
+      "description": "Maggianico",
+      "folder": "https://drive.google.com/drive/folders/1hRou7zuDz3LLMOySUlqOF8GjF7gbUHmD?usp=drive_link",
+      "cover": "assets/foto/18-20220612-villa-gomes.jpg",
+      "coverAlt": "Aida 150 anni a Maggianico",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20220508-primavera-festa",
+      "title": "PrimaVera Festa",
+      "date": "2022-05",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/1mkW6Pj_tsN8dy0RMsk8UuAAMooKF4OX7?usp=drive_link",
+      "cover": "assets/foto/19-20220508-primavera-festa.jpg",
+      "coverAlt": "PrimaVera Festa a San Giovanni",
+      "coverPosition": "50% 0%"
+    },
+    {
+      "slug": "20210912-resinelli",
+      "title": "Marce in piazza",
+      "date": "2021-09",
+      "description": "Resinelli",
+      "folder": "https://drive.google.com/drive/folders/1BFQwNLHUkF5uhrpUyGx0XrZNx4IZv5xV?usp=drive_link",
+      "cover": "assets/foto/20-20210912-resinelli.jpg",
+      "coverAlt": "Marce in piazza a Resinelli",
+      "coverPosition": "55% 0%"
+    },
+    {
+      "slug": "20190629-varigione",
+      "title": "Concerto di Varigione",
+      "date": "2019-06",
+      "description": "Varigione",
+      "folder": "https://drive.google.com/drive/folders/1lDhDdkGZwG4ZNsaK060Pe0Oih1ehDBQo?usp=drive_link",
+      "cover": "assets/foto/21-20190629-varigione.jpg",
+      "coverAlt": "Concerto di Varigione a Varigione",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20190406-san-giovanni-pozzoni",
+      "title": "Concerto di primavera",
+      "date": "2019-04",
+      "description": "San Giovanni · Foto di Luca Pozzoni",
+      "folder": "https://drive.google.com/drive/folders/1J4I62lolEwD4fxJYtwUW0JTi2Cs0FBXk?usp=drive_link",
+      "cover": "assets/foto/22-20190406-san-giovanni-pozzoni.jpg",
+      "coverAlt": "Concerto di primavera a San Giovanni",
+      "coverPosition": "50% 0%"
+    },
+    {
+      "slug": "20180622-lecco",
+      "title": "Le grandi battaglie",
+      "date": "2018-06",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1S9ZZdJ8bKPXVcexiSFrQFHTM7qw-wJ0V?usp=drive_link",
+      "cover": "assets/foto/23-20180622-lecco.jpg",
+      "coverAlt": "Le grandi battaglie a Lecco",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20180527-bressanella",
+      "title": "Festa di fine anno",
+      "date": "2018-05",
+      "description": "Bressanella",
+      "folder": "https://drive.google.com/drive/folders/114XkcINJpLQ2RgYicKvgqyOHGCFgLpSr?usp=drive_link",
+      "cover": "assets/foto/24-20180527-bressanella.jpg",
+      "coverAlt": "Festa di fine anno a Bressanella",
+      "coverPosition": "5% 0%"
+    },
+    {
+      "slug": "20171203-lecco",
+      "title": "Concerto di San Nicolò",
+      "date": "2017-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1aknhoSZskC7u0CKdLxed6MAcunw18Eni?usp=drive_link",
+      "cover": "assets/foto/25-20171203-lecco.jpg",
+      "coverAlt": "Concerto di San Nicolò a Lecco",
+      "coverPosition": "45% 0%"
+    },
+    {
+      "slug": "20171119-santa-cecilia",
+      "title": "Santa Cecilia",
+      "date": "2017-11",
+      "description": "Pasturo",
+      "folder": "https://drive.google.com/drive/folders/1-koUcFj7t-MUhs30J7RTyk9J2y_oOnzo?usp=drive_link",
+      "cover": "assets/foto/26-20171119-santa-cecilia.jpg",
+      "coverAlt": "Santa Cecilia a Pasturo",
+      "coverPosition": "55% 0%"
+    },
+    {
+      "slug": "20170923-open-day",
+      "title": "Open day",
+      "date": "2017-09",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/1pVO523CGQQtc1v5MT3Oi35Xx3ro7r0je?usp=drive_link",
+      "cover": "assets/foto/27-20170923-open-day.jpg",
+      "coverAlt": "Open day a San Giovanni",
+      "coverPosition": "8% 0%"
+    },
+    {
+      "slug": "20170708-maggianico",
+      "title": "Tra corti e rioni",
+      "date": "2017-07",
+      "description": "Maggianico",
+      "folder": "https://drive.google.com/drive/folders/1deiQfeErOy846lRwVzAEh9LQHfYrJt9X?usp=drive_link",
+      "cover": "assets/foto/28-20170708-maggianico.jpg",
+      "coverAlt": "Tra corti e rioni a Maggianico",
+      "coverPosition": "45% 0%"
+    },
+    {
+      "slug": "20170701-varigione",
+      "title": "Tra corti e rioni",
+      "date": "2017-07",
+      "description": "Varigione",
+      "folder": "https://drive.google.com/drive/folders/1pj_0sg205lb4ZnfBvtysckja56WlrfWy?usp=drive_link",
+      "cover": "assets/foto/29-20170701-varigione.jpg",
+      "coverAlt": "Tra corti e rioni a Varigione",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20170611-bressanella",
+      "title": "Festa di fine anno",
+      "date": "2017-06",
+      "description": "Bressanella",
+      "folder": "https://drive.google.com/drive/folders/1eRAYjTKfyLSjd0CE2_LktRQceMy6LitO?usp=drive_link",
+      "cover": "assets/foto/30-20170611-bressanella.jpg",
+      "coverAlt": "Festa di fine anno a Bressanella",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20161008-san-giovanni",
+      "title": "Open day",
+      "date": "2016-10",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/15nW8H8bfH7BkFUJOjYOXhMApZI9evtQq?usp=drive_link",
+      "cover": "assets/foto/31-20161008-san-giovanni.jpg",
+      "coverAlt": "Open day a San Giovanni",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20161001-seregno",
+      "title": "Seregno",
+      "date": "2016-10",
+      "description": "Seregno",
+      "folder": "https://drive.google.com/drive/folders/15WrfNogOlyV_viCtG4yWiA6jKUdarmLF?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1vYxcdDhH_FkfI0qAqiC6OwYfNOrWbBrg/view"
+    },
+    {
+      "slug": "20160605-resinelli",
+      "title": "Festa di fine anno",
+      "date": "2016-06",
+      "description": "Resinelli",
+      "folder": "https://drive.google.com/drive/folders/1Bw4Kqrle0SAwr2RXSA8Z5MDOa_1eEJTo?usp=drive_link",
+      "cover": "assets/foto/32-20160605-resinelli.jpg",
+      "coverAlt": "Festa di fine anno a Resinelli",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20151211-lecco-coduri",
+      "title": "Rhapsody in Blue Around",
+      "date": "2015-12",
+      "description": "Lecco · Foto di Massimo Coduri de Cartosio",
+      "folder": "https://drive.google.com/drive/folders/1CP7WTzOikx51b2d0BzR02L1LQ3FSgodK?usp=drive_link",
+      "cover": "assets/foto/33-20151211-lecco-coduri.jpg",
+      "coverAlt": "Rhapsody in Blue Around a Lecco",
+      "coverPosition": "100% 0%"
+    },
+    {
+      "slug": "20151122-santa-cecilia",
+      "title": "Santa Cecilia",
+      "date": "2015-11",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/1eAjyFKnR4Y25H-Z5gG6BXhgIgQuojklj?usp=drive_link",
+      "cover": "assets/foto/34-20151122-santa-cecilia.jpg",
+      "coverAlt": "Santa Cecilia a San Giovanni",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20150718-lecco-coduri",
+      "title": "Ciack, si suona!",
+      "date": "2015-07",
+      "description": "Lecco · Foto di Massimo Coduri de Cartosio",
+      "folder": "https://drive.google.com/drive/folders/1PDQJ6Yfpb4a7mDZZtr9K-ZldzYMBaaWw?usp=drive_link",
+      "cover": "assets/foto/35-20150718-lecco-coduri.jpg",
+      "coverAlt": "Ciack, si suona! a Lecco",
+      "coverPosition": "95% 0%"
+    },
+    {
+      "slug": "20150716-seregno",
+      "title": "Ciack, si suona!",
+      "date": "2015-07",
+      "description": "Seregno",
+      "folder": "https://drive.google.com/drive/folders/1VSr75mNjd6V1Cjdkm8EGbAUxV91NE2tZ?usp=drive_link",
+      "cover": "assets/foto/36-20150716-seregno.jpg",
+      "coverAlt": "Ciack, si suona! a Seregno",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20150705-lecco",
+      "title": "Maratona Benefica del Calcio",
+      "date": "2015-07",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/11uX36CbHILuMaGGn1JGaLVpweXoX_VUn?usp=drive_link",
+      "cover": "assets/foto/37-20150705-lecco.jpg",
+      "coverAlt": "Maratona Benefica del Calcio a Lecco",
+      "coverPosition": "30% 0%"
+    },
+    {
+      "slug": "20150609-san-giovanni",
+      "title": "Festa di fine anno",
+      "date": "2015-06",
+      "description": "San Giovanni",
+      "folder": "https://drive.google.com/drive/folders/1fAEv6oQCA-FvIbeRF6oFQIrHZ0Qys2GW?usp=drive_link",
+      "cover": "assets/foto/38-20150609-san-giovanni.jpg",
+      "coverAlt": "Festa di fine anno a San Giovanni",
+      "coverPosition": "50% 0%"
+    },
+    {
+      "slug": "20150412-lecco",
+      "title": "Concerto di primavera",
+      "date": "2015-04",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1eigyOdHyEyZfR34m4ayum7RBsA4cANgi?usp=drive_link",
+      "cover": "assets/foto/39-20150609-san-giovanni.jpg",
+      "coverAlt": "Concerto di primavera a Lecco",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20150411-carnevalone-lecconotizie",
+      "title": "Carnevalone",
+      "date": "2015-04",
+      "description": "Lecco · Foto di LeccoNotizie",
+      "folder": "https://drive.google.com/drive/folders/1LHAVgiQ51JdIBQDXN-X4OxOaufBHA5sv?usp=drive_link",
+      "cover": "assets/foto/40-20150411-carnevalone-lecconotizie.jpg",
+      "coverAlt": "Carnevalone a Lecco",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20150106-lecco",
+      "title": "Epifania",
+      "date": "2015-01",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1pGsGRo5MLRrHGCRPHuSJbUvLZ4mkWutm?usp=drive_link",
+      "cover": "assets/foto/41-20150106-lecco.jpg",
+      "coverAlt": "Epifania a Lecco",
+      "coverPosition": "0% 0%"
+    },
+    {
+      "slug": "20141220-tuba",
+      "title": "Tuba sotto l'albero",
+      "date": "2014-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1KphrZ797uBq5kM52yUTVqGSTTjPEptsR?usp=drive_link",
+      "cover": "assets/foto/42-20141220-tuba.jpg",
+      "coverAlt": "Tuba sotto l'albero a Lecco",
+      "coverPosition": "20% 0%"
+    },
+    {
+      "slug": "20141213-olgiate-molgora",
+      "title": "Concertino di Natale",
+      "date": "2014-12",
+      "description": "Olgiate Molgora",
+      "folder": "https://drive.google.com/drive/folders/1bpIK8qU2KR3UXdUSJG4bMwn_U23O5QAa?usp=drive_link",
+      "cover": "assets/foto/43-20141213-olgiate-molgora.jpg",
+      "coverAlt": "Concertino di Natale a Olgiate Molgora",
+      "coverPosition": "60% 0%"
+    },
+    {
+      "slug": "20141123-santa-cecilia",
+      "title": "Santa Cecilia",
+      "date": "2014-11",
+      "description": "",
+      "folder": "https://drive.google.com/drive/folders/1WjaSXg8GF0BjOssDmrRQc0MYU-WRhHUJ?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1ghHbWIWp8QLTrNfJnlDh_z7hrFscAkcK/view"
+    },
+    {
+      "slug": "20141102-carenno",
+      "title": "Carenno",
+      "date": "2014-11",
+      "description": "Carenno",
+      "folder": "https://drive.google.com/drive/folders/1nySzhxkIPW5g0fgyRb_T4Y0T95fxiJ_j?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/18x3mz8GIzMTwOBpPG2iwhfSuu2dQHW77/view"
+    },
+    {
+      "slug": "20090605-festa-arma-carabinieri",
+      "title": "Festa dell’Arma dei Carabinieri",
+      "date": "2009-06",
+      "description": "Teatro Sociale, Lecco",
+      "folder": "https://drive.google.com/drive/folders/1NWA1Xvh6Z_rU2j9DKJb_wkqGtOVcyA0b?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1MOoRBmmlwGLrT5n1xeKycC37dKzNQQQP/view"
+    },
+    {
+      "slug": "20090613-teatro-creberg-bergamo",
+      "title": "Teatro Creberg",
+      "date": "2009-06",
+      "description": "Bergamo",
+      "folder": "https://drive.google.com/drive/folders/1qXIMO1D1_J2DB4fItoN-UZE4aWEaeTkc?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1DCukV5wcK6iJrktU_QFBO24QqoOpUssA/view"
+    },
+    {
+      "slug": "20090530-castello",
+      "title": "Castello",
+      "date": "2009-05",
+      "description": "Castello",
+      "folder": "https://drive.google.com/drive/folders/16u6kMQCf19CD2HqO6q75TrpzVEyJLfM8?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/19I0AVilqiq2G8LH9NLmNi7hR59Y3UuOL/view"
+    },
+    {
+      "slug": "20081207-lecco-2",
+      "title": "Lecco · Album 2",
+      "date": "2008-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/11cLX9bWHsgOfs-3rndLSfDruVyXaVlaB?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1paKVUq-ZHWTC35IMy-2gVEwSce8pLlkq/view"
+    },
+    {
+      "slug": "20081207-lecco-1",
+      "title": "Lecco · Album 1",
+      "date": "2008-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1Gdyw82CoP3iRbQHQIsrUoA6DA83fsfG_?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1YwW5e8m5Vz-UuhodDJDCqO4h5sNjYQbH/view"
+    },
+    {
+      "slug": "20081224-piva",
+      "title": "Piva di Natale",
+      "date": "2008-12",
+      "description": "",
+      "folder": "https://drive.google.com/drive/folders/1QDZhpBa5gvYLXTOuFHXATQF_gw9oYg_M?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1JiqNhzeMP05-UHgViIA2Q12GngqzkE3d/view"
+    },
+    {
+      "slug": "200812-lecco",
+      "title": "Lecco",
+      "date": "2008-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1ytV7K-mqMbC1L0TJFskCWQqRkLczs1VY?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1ZwVLJ6gNFptgGgNPq7aW2C3b-MYQkRdu/view"
+    },
+    {
+      "slug": "20080604-lecco",
+      "title": "Lecco",
+      "date": "2008-06",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1U3rdsEdObIU_8lYQsafpg9fC0SqpWYYo?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1int_Jvra1QGQmsdE6kwngBG3XaxI67ne/view"
+    },
+    {
+      "slug": "20061203-lecco",
+      "title": "Lecco",
+      "date": "2006-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1pomzzDnZRcXiUyf3IgnU7KSlH0OVHqmd?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1dXywephRpUGMwi1bb-DuAy2vHzyga2Ob/view"
+    },
+    {
+      "slug": "20051204-lecco",
+      "title": "Lecco",
+      "date": "2005-12",
+      "description": "Lecco",
+      "folder": "https://drive.google.com/drive/folders/1wVqg_bxo_Q_EHFcMuq-RPP35oTwUOuDb?usp=drive_link",
+      "cover": "https://drive.google.com/file/d/1xPDlLUUeV3tSWh7ArCmN0BHLZ0KcKKsk/view"
+    }
+  ]
+}

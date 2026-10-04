@@ -89,10 +89,19 @@
     showPhoto(current + (event.key === "ArrowRight" ? 1 : -1));
   });
   viewer.addEventListener("click", (event) => {
-    if (event.target !== viewer) return;
-    const rect = viewer.getBoundingClientRect();
-    if (event.clientX < rect.left || event.clientX > rect.right ||
-        event.clientY < rect.top || event.clientY > rect.bottom) viewer.close();
+    if (event.target.closest("button, a")) return;
+    if (!image.hidden && image.naturalWidth && image.naturalHeight) {
+      // object-fit: contain lascia spazio vuoto dentro il riquadro dell’immagine.
+      const rect = image.getBoundingClientRect();
+      const scale = Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      const left = rect.left + (rect.width - width) / 2;
+      const top = rect.top + (rect.height - height) / 2;
+      if (event.clientX >= left && event.clientX <= left + width &&
+          event.clientY >= top && event.clientY <= top + height) return;
+    }
+    viewer.close();
   });
   viewer.addEventListener("close", () => document.body.classList.remove("gallery-open"));
 })();
