@@ -821,13 +821,16 @@ body.gallery-open {
 }
 .section-index-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
   gap: 0 32px;
 }
 .section-index a {
   display: block;
   position: relative;
   flex-shrink: 0;
+  white-space: nowrap;
   padding: 20px 0;
   color: var(--ink);
   font-size: 0.9rem;
@@ -1438,14 +1441,6 @@ summary:focus-visible {
   }
   .photo-viewer {
     --viewer-margin: 4px;
-  }
-  .section-index-links {
-    flex-wrap: nowrap;
-    min-width: 0;
-    overflow-x: auto;
-  }
-  .section-index a {
-    white-space: nowrap;
   }
   .content-block {
     scroll-margin-top: 24px;
