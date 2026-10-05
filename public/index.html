@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- FILE GENERATO: modifica templates/index.html e lancia npm run build. -->
 
 <html lang="it">
   <head>
@@ -15,7 +16,7 @@
   <body class="home-page">
     <a class="skip-link" href="#contenuto">Vai al contenuto</a>
     <!-- include: header -->
-    <!-- CONTENUTO: modifica qui testi, immagini e collegamenti della pagina. -->
+    <!-- CONTENUTO: modifica qui il titolo e la foto. Eventi e notizie sono automatici; Scopri la Filarmonica è in partials/scopri-filarmonica.html. -->
     <main id="contenuto">
       <section class="hero">
         <div class="hero-copy">
@@ -48,41 +49,41 @@
             </div>
             <a class="text-link" href="prossimi-eventi.html">Tutti gli eventi</a>
           </div>
-          <!-- Aggiorna anche questo riepilogo quando modifichi prossimi-eventi.html. -->
           <div class="event-list">
-            <a class="event-row" href="prossimi-eventi.html#ballabio-2026">
-              <span class="event-date">
-                <span class="date-number">Ott</span>
-                <span class="date-month">2026</span>
-              </span>
-              <h3>Frazioni di musica</h3>
-              <span class="event-place">Ballabio</span>
-            </a>
-            <a class="event-row" href="prossimi-eventi.html#carenno-2026">
-              <span class="event-date">
-                <span class="date-number">08</span>
-                <span class="date-month">
-                  Novembre
-                  <br />
-                  2026
-                </span>
-              </span>
-              <h3>Celebrazioni del IV Novembre</h3>
-              <span class="event-place">Carenno</span>
-            </a>
-            <a class="event-row" href="prossimi-eventi.html#patrona-2026">
-              <span class="event-date">
-                <span class="date-number">22</span>
-                <span class="date-month">
-                  Novembre
-                  <br />
-                  2026
-                </span>
-              </span>
-              <h3>Festa patronale di San Giovanni</h3>
-              <span class="event-place">Lecco · San Giovanni</span>
-            </a>
-          </div>
+    <a class="event-row" href="prossimi-eventi.html#ballabio-2026">
+      <span class="event-date">
+            <span class="date-number">Ott</span>
+            <span class="date-month">2026</span>
+          </span>
+      <h3>Frazioni di musica</h3>
+      <span class="event-place">Ballabio</span>
+    </a>
+
+    <a class="event-row" href="prossimi-eventi.html#carenno-2026">
+      <span class="event-date">
+            <span class="date-number">08</span>
+            <span class="date-month">
+              Novembre
+              <br />
+              2026
+            </span>
+          </span>
+      <h3>Celebrazioni del IV Novembre</h3>
+      <span class="event-place">Carenno</span>
+    </a>
+
+    <a class="event-row" href="prossimi-eventi.html#patrona-2026">
+      <span class="event-date">
+            <span class="date-number">22</span>
+            <span class="date-month">
+              Novembre
+              <br />
+              2026
+            </span>
+          </span>
+      <h3>Festa patronale di San Giovanni</h3>
+      <span class="event-place">Lecco · San Giovanni</span>
+    </a></div>
         </div>
       </section>
       <section class="section">
@@ -124,25 +125,24 @@
             </div>
             <a class="text-link" href="blog.html">Tutte le notizie</a>
           </div>
-          <!-- Notizia in evidenza: aggiorna anche blog.html e la pagina in blog/. -->
           <article class="news-card">
-            <img
-              alt="Torna «Pronti, settembre, via!»"
-              height="1200"
-              loading="lazy"
-              src="assets/varenna.jpg"
-              width="1600"
-            />
-            <div class="news-card-copy">
-              <span class="eyebrow">Maggio 2026</span>
-              <h3>Torna «Pronti, settembre, via!»</h3>
-              <p>
-                Il progetto della Filarmonica dedicato ai bambini delle scuole elementari torna con
-                musica, gioco e divertimento.
-              </p>
-              <a class="text-link" href="blog/pronti-settembre-via.html">Leggi la notizia</a>
-            </div>
-          </article>
+    <img
+                src="assets/news-pronti-settembre-via.jpg"
+                alt="Torna «Pronti, settembre, via!»"
+                width="1200"
+                height="799"
+                loading="lazy"
+              />
+    <div class="news-card-copy">
+                <span class="eyebrow">Maggio 2026</span>
+                <h3>Torna «Pronti, settembre, via!»</h3>
+                <p>
+                  Il progetto della Filarmonica dedicato ai bambini delle scuole elementari torna con
+                  musica, gioco e divertimento.
+                </p>
+                <a class="text-link" href="blog/pronti-settembre-via.html">Leggi la notizia</a>
+              </div>
+  </article>
         </div>
       </section>
     </main>

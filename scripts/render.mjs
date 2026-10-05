@@ -6,7 +6,7 @@ export async function renderPage(html, filename, root) {
   const page = relative(root, filename).split(sep).join("/");
   const prefix = relative(dirname(filename), root).split(sep).join("/");
   const fragments = {};
-  for (const name of ["header", "footer"]) {
+  for (const name of ["header", "footer", "scopri-filarmonica"]) {
     if (!html.includes(`<!-- include: ${name} -->`)) continue;
     let fragment = await readFile(resolve(root, "partials", `${name}.html`), "utf8");
     fragment = fragment.replace(/<a\b([^>]*?)href="([^"]+)"([^>]*?)>/g, (tag, before, href, after) => {
@@ -22,5 +22,5 @@ export async function renderPage(html, filename, root) {
     });
     fragments[name] = fragment.trimEnd();
   }
-  return html.replace(/<!-- include: (header|footer) -->/g, (_, name) => fragments[name]);
+  return html.replace(/<!-- include: (header|footer|scopri-filarmonica) -->/g, (_, name) => fragments[name]);
 }

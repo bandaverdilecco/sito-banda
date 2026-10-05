@@ -14,7 +14,7 @@ npm run dev
 
 Sul computer apri http://127.0.0.1:8080. Sul telefono collegato alla stessa rete Wi-Fi, usa l’IP locale del computer, completo di `http://` e porta `8080`, per esempio `http://192.168.1.59:8080`. Puoi trovare l’IP nelle impostazioni di rete del computer. Lascia il server acceso mentre navighi dal telefono.
 
-Dopo una modifica, salva il file e aggiorna la pagina. Arresta il server con `Ctrl+C`.
+Dopo una modifica, salva il file e aggiorna la pagina. Per aggiornare la homepage esegui prima la build. Arresta il server con `Ctrl+C`.
 
 Il server accetta già connessioni dalla rete locale. Per cambiare porta o limitarlo al solo computer:
 
@@ -27,7 +27,9 @@ npm run dev -- --ip 127.0.0.1
 
 | Contenuto | File |
 | --- | --- |
-| Homepage, riepilogo eventi, notizia in evidenza | `public/index.html` |
+| Titolo, foto e struttura della homepage | `templates/index.html` |
+| Sezione «Scopri la Filarmonica» | `public/partials/scopri-filarmonica.html` |
+| Eventi e notizia in homepage | Generati da `public/prossimi-eventi.html` e `public/blog.html` |
 | Calendario completo | `public/prossimi-eventi.html` |
 | Elenco delle notizie | `public/blog.html` |
 | Testo di ogni notizia | `public/blog/*.html` |
@@ -48,6 +50,20 @@ I testi sono dentro tag come `<h1>`, `<h2>` e `<p>`; i collegamenti sono nell'at
 
 Le pagine **La Filarmonica** e **Scuola allievi** raccolgono i contenuti in sezioni. L’indice iniziale usa collegamenti come `href="#storia"`, che puntano alla sezione con `id="storia"`. Per aggiungere una sezione, copia un blocco `<section class="section content-block">`, scegli un `id` unico e aggiungi il relativo link nell’indice. Le sezioni di contenuto direttamente dentro `<main>` con classe `section` alternano automaticamente sfondo chiaro e più scuro, iniziando dal chiaro. Il banner iniziale è escluso dal conteggio; non servono classi di colore manuali. I vecchi indirizzi sono elencati in `public/_redirects` e rimandano alle sezioni corrispondenti.
 
+### Homepage automatica
+
+La homepage viene generata **solo durante la build**. Modifica `templates/index.html` per il titolo, la foto e l’impaginazione; modifica `public/partials/scopri-filarmonica.html` per la sezione «Scopri la Filarmonica».
+
+I commenti `<!-- include: home-events -->` e `<!-- include: home-news -->` del template importano i riepiloghi dai rispettivi elenchi HTML. La data viene letta dal testo visibile: usa nomi italiani dei mesi e un anno di quattro cifre. `<!-- include: scopri-filarmonica -->` importa il frammento dedicato.
+
+Dopo aver cambiato eventi, notizie o il frammento, esegui:
+
+```bash
+npm run build
+```
+
+La build aggiorna sia `public/index.html`, usato dall’anteprima, sia `dist/index.html`, pronto per la pubblicazione. Poi basta aggiornare il browser, senza riavviare `npm run dev`. Non modificare `public/index.html` direttamente: è un file generato. Header e footer rimangono condivisi con le altre pagine.
+
 ### Aggiungere un evento
 
 In `public/prossimi-eventi.html`, copia un blocco `<article class="event-card" ...>...</article>` e modifica data, titolo, luogo e descrizione. Assegna un `id` diverso e disponi gli eventi nell'ordine desiderato. La data è divisa in `date-number` (giorno) e `date-month` (mese e anno); per una data ancora da definire puoi scrivere il mese abbreviato al posto del giorno.
@@ -66,14 +82,14 @@ In `public/prossimi-eventi.html`, copia un blocco `<article class="event-card" .
 </article>
 ```
 
-Aggiorna anche i tre appuntamenti in `public/index.html`: il riepilogo è scritto a mano, quindi non si aggiorna automaticamente.
+La homepage seleziona automaticamente i tre prossimi appuntamenti in ordine di data, includendo quelli di oggi (fuso Europe/Rome). Gli eventi senza giorno preciso restano visibili fino alla fine del mese indicato. Se non ci sono appuntamenti futuri compare un messaggio provvisorio. Modifica soltanto `public/prossimi-eventi.html`: non devi ricopiare gli eventi nella homepage.
 
 ### Aggiungere una notizia
 
 1. Copia una pagina di `public/blog/`, per esempio in `public/blog/nuovo-concerto.html`.
 2. Cambia titolo, descrizione nel `<head>`, data, foto e testo dentro `<main>`.
 3. Copia un blocco `<article>` in `public/blog.html` e collega la nuova pagina con `href="blog/nuovo-concerto.html"`.
-4. Se vuoi metterla in evidenza, aggiorna anche il riquadro in `public/index.html`.
+4. La homepage mostra automaticamente la notizia con il mese e anno più recenti, usando la stessa immagine, descrizione e collegamento. A parità di mese viene scelta quella che compare prima in `public/blog.html`.
 
 ### Cambiare una foto o aggiungere una pagina
 
@@ -124,19 +140,25 @@ Questo comando sincronizza i file pubblici in `dist/`, genera la pagina Foto e l
 
 ### Build più veloci e cache di Drive
 
-La build normale controlla tutte le cartelle Drive, incluse le sottocartelle, con un massimo di sei richieste contemporanee. Gli elenchi sono salvati in `.cache/drive/` e aggiornati soltanto quando cambiano nomi, file o sottocartelle. Una cartella condivisa da più album viene controllata una sola volta nella stessa build. Anche se la cartella principale è invariata, le sottocartelle vengono controllate per rilevare aggiunte e rimozioni.
-
-Le pagine pubbliche di Drive non espongono un indicatore affidabile di modifica: il controllo normale deve comunque leggere gli elenchi. La cache non significa che la build normale possa sapere se una cartella è cambiata senza contattare Drive. I file delle fotografie non vengono scaricati durante la build.
-
-Quando cambi solo testi, HTML o CSS, puoi riutilizzare gli elenchi già salvati:
+La build usa per impostazione predefinita gli elenchi salvati in `.cache/drive/`:
 
 ```bash
-npm run build -- --cached-drive
+npm run build
 ```
 
-Questa modalità non contatta Drive per le cartelle presenti nella cache. Le cartelle nuove o prive di cache vengono scaricate normalmente. **Le modifiche fatte su Drive dopo l’ultimo controllo non sono rilevate in questa modalità**: per importarle esegui `npm run build` senza opzioni, soprattutto prima di pubblicare.
+Non contatta Drive per le cartelle già presenti nella cache. Le cartelle nuove o prive di cache vengono scaricate normalmente. Le modifiche locali a testi, HTML, CSS e JSON vengono sempre applicate. **Le modifiche fatte su Drive dopo l’ultimo controllo non vengono rilevate dalla build predefinita.**
 
-La cache è locale, esclusa da Git e dalla pubblicazione; non contiene la chiave API. Puoi cancellare `.cache/drive/` per ricostruirla. Gli errori di accesso nella build normale interrompono la generazione prima di aggiornare `dist/`, senza usare silenziosamente dati vecchi. Il riepilogo finale mostra quante cartelle sono state verificate o lette dalla cache e quanti file sono stati aggiornati.
+Per controllare gli aggiornamenti su Drive, soprattutto prima di pubblicare:
+
+```bash
+npm run build -- --no-cached-drive
+```
+
+Questa opzione verifica tutte le cartelle, incluse le sottocartelle, con un massimo di sei richieste contemporanee. Aggiorna gli elenchi salvati solo quando cambiano nomi, file o sottocartelle. Una cartella condivisa da più album viene controllata una sola volta nella stessa build. Anche se la cartella principale è invariata, le sottocartelle vengono controllate per rilevare aggiunte e rimozioni.
+
+Le pagine pubbliche di Drive non espongono un indicatore affidabile di modifica: per verificare gli aggiornamenti occorre comunque leggere gli elenchi. I file delle fotografie non vengono scaricati durante la build.
+
+La cache è locale, esclusa da Git e dalla pubblicazione; non contiene la chiave API. Puoi cancellare `.cache/drive/` per ricostruirla. Gli errori di accesso durante un controllo interrompono la generazione prima di aggiornare `dist/`, senza usare silenziosamente dati vecchi. Il riepilogo finale mostra quante cartelle sono state verificate o lette dalla cache e quanti file sono stati aggiornati.
 
 Le precedenti credenziali in `.dev.vars` e gli archivi locali in `.wrangler/`, se presenti, non sono più usati e non vengono copiati in `dist/`.
 
