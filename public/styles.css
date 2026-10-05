@@ -1114,10 +1114,15 @@ address {
 .back-to-top[hidden] {
   display: none;
 }
-.back-to-top:hover,
 .back-to-top:active {
   background: var(--accent);
   color: var(--white);
+}
+@media (hover: hover) and (pointer: fine) {
+  .back-to-top:hover {
+    background: var(--accent);
+    color: var(--white);
+  }
 }
 .back-to-top:focus-visible {
   outline: 2px solid var(--accent);
