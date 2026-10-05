@@ -67,7 +67,7 @@ async function get(url, headers = {}) {
   return response;
 }
 
-async function readEntries(link, apiKey) {
+export async function readEntries(link, apiKey, preferEmbedded = false) {
   const { id, resourceKey } = folderDetails(link);
   let photos = [];
   if (apiKey) {
@@ -91,15 +91,19 @@ async function readEntries(link, apiKey) {
   } else {
     const url = new URL(`https://drive.google.com/drive/folders/${id}`);
     if (resourceKey) url.searchParams.set("resourcekey", resourceKey);
-    const html = await (await get(url)).text();
     try {
-      photos = parsePublicEntries(html, id);
+      if (preferEmbedded) throw new Error("Usa elenco completo");
+      photos = parsePublicEntries(await (await get(url)).text(), id);
     } catch {
       const embedded = new URL("https://drive.google.com/embeddedfolderview");
       embedded.searchParams.set("id", id);
       if (resourceKey) embedded.searchParams.set("resourcekey", resourceKey);
       photos = parseEmbeddedFolder(await (await get(embedded)).text());
-      if (!photos.length) throw new Error("Impossibile verificare l’elenco completo della cartella Drive.");
+      if (!photos.length) {
+        // Un elenco incorporato vuoto può indicare una cartella non accessibile.
+        // Conferma la cartella vuota con la vista principale prima di cancellare foto.
+        photos = parsePublicEntries(await (await get(url)).text(), id);
+      }
     }
   }
   for (const photo of photos) {
@@ -108,14 +112,14 @@ async function readEntries(link, apiKey) {
   return photos.sort((a, b) => a.name.localeCompare(b.name, "it", { numeric: true }));
 }
 
-export async function readDriveFolder(link, { apiKey = process.env.GOOGLE_DRIVE_API_KEY } = {}) {
+export async function readDriveFolder(link, { apiKey = process.env.GOOGLE_DRIVE_API_KEY, entriesReader } = {}) {
   const visited = new Set();
   const photos = new Map();
   async function visit(folder) {
     const { id } = folderDetails(folder);
     if (visited.has(id)) return;
     visited.add(id);
-    for (const file of await readEntries(folder, apiKey)) {
+    for (const file of await (entriesReader ? entriesReader(folder) : readEntries(folder, apiKey))) {
       if (file.mimeType?.startsWith("image/")) photos.set(file.id, file);
       else if (file.mimeType === "application/vnd.google-apps.folder") {
         const child = new URL(`https://drive.google.com/drive/folders/${file.id}`);

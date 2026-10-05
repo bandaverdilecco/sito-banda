@@ -120,7 +120,23 @@ Genera il sito e carica il **contenuto** di `dist/` su un qualsiasi hosting stat
 npm run build
 ```
 
-Questo comando copia i file pubblici in `dist/`, genera la pagina Foto e le gallerie dal JSON e inserisce header e footer nelle pagine, generando HTML completo. Non modificare direttamente `dist/`: viene rigenerata a ogni build. `public/_redirects` mantiene i vecchi indirizzi senza `.html` sugli hosting che supportano questo file e nel server di anteprima. Su altri hosting, configura i redirect equivalenti se ti servono i vecchi link.
+Questo comando sincronizza i file pubblici in `dist/`, genera la pagina Foto e le gallerie dal JSON e inserisce header e footer nelle pagine, generando HTML completo. Scrive soltanto i file il cui contenuto è cambiato e rimuove quelli che non fanno più parte del sito. Non modificare direttamente `dist/`: la build gestisce tutto il suo contenuto. `public/_redirects` mantiene i vecchi indirizzi senza `.html` sugli hosting che supportano questo file e nel server di anteprima. Su altri hosting, configura i redirect equivalenti se ti servono i vecchi link.
+
+### Build più veloci e cache di Drive
+
+La build normale controlla tutte le cartelle Drive, incluse le sottocartelle, con un massimo di sei richieste contemporanee. Gli elenchi sono salvati in `.cache/drive/` e aggiornati soltanto quando cambiano nomi, file o sottocartelle. Una cartella condivisa da più album viene controllata una sola volta nella stessa build. Anche se la cartella principale è invariata, le sottocartelle vengono controllate per rilevare aggiunte e rimozioni.
+
+Le pagine pubbliche di Drive non espongono un indicatore affidabile di modifica: il controllo normale deve comunque leggere gli elenchi. La cache non significa che la build normale possa sapere se una cartella è cambiata senza contattare Drive. I file delle fotografie non vengono scaricati durante la build.
+
+Quando cambi solo testi, HTML o CSS, puoi riutilizzare gli elenchi già salvati:
+
+```bash
+npm run build -- --cached-drive
+```
+
+Questa modalità non contatta Drive per le cartelle presenti nella cache. Le cartelle nuove o prive di cache vengono scaricate normalmente. **Le modifiche fatte su Drive dopo l’ultimo controllo non sono rilevate in questa modalità**: per importarle esegui `npm run build` senza opzioni, soprattutto prima di pubblicare.
+
+La cache è locale, esclusa da Git e dalla pubblicazione; non contiene la chiave API. Puoi cancellare `.cache/drive/` per ricostruirla. Gli errori di accesso nella build normale interrompono la generazione prima di aggiornare `dist/`, senza usare silenziosamente dati vecchi. Il riepilogo finale mostra quante cartelle sono state verificate o lette dalla cache e quanti file sono stati aggiornati.
 
 Le precedenti credenziali in `.dev.vars` e gli archivi locali in `.wrangler/`, se presenti, non sono più usati e non vengono copiati in `dist/`.
 

@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { readDriveFolder, folderDetails } from "./drive.mjs";
+import { limitConcurrency } from "./drive-cache.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = path => readFile(new URL(path, root), "utf8");
@@ -101,8 +102,12 @@ export function renderAlbum(album, photos, template) {
 }
 
 const folderCache = new Map();
-async function photosFor(album) {
+async function photosFor(album, readFolder) {
   if (!album.folder) return [];
+  if (readFolder) {
+    try { return await readFolder(album.folder); }
+    catch (error) { throw new Error(`Album ${album.slug}: ${error.message}`); }
+  }
   const cached = folderCache.get(album.folder);
   if (cached && Date.now() - cached.time < 60000) return cached.photos;
   try {
@@ -115,14 +120,18 @@ async function photosFor(album) {
 }
 
 // path omesso: build completa. In anteprima risolve solo la pagina richiesta.
-export async function generateAlbumPages(path) {
+export async function generateAlbumPages(path, { readFolder } = {}) {
   const albums = await loadAlbums();
   const pages = new Map();
   if (!path || path === "foto.html") pages.set("foto.html", renderIndex(albums, await read("templates/foto.html")));
   const selected = albums.filter(album => !path || path === `foto/${album.slug}.html`);
   if (selected.length) {
     const template = await read("templates/album.html");
-    for (const album of selected) pages.set(`foto/${album.slug}.html`, renderAlbum(album, await photosFor(album), template));
+    const limit = limitConcurrency(6);
+    const rendered = await Promise.all(selected.map(album => limit(async () => [
+      `foto/${album.slug}.html`, renderAlbum(album, await photosFor(album, readFolder), template),
+    ])));
+    for (const [name, html] of rendered) pages.set(name, html);
   }
   return pages;
 }

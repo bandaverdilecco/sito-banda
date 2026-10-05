@@ -1,35 +1,40 @@
 // Genera HTML completo per l'hosting, inserendo header e footer condivisi.
-import { cp, mkdir, rm, readdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { renderPage } from "./render.mjs";
 import { generateAlbumPages } from "./albums.mjs";
+import { createDriveCache } from "./drive-cache.mjs";
+import { writeOutput } from "./output.mjs";
+
+const { values } = parseArgs({ options: { "cached-drive": { type: "boolean", default: false } } });
+const drive = createDriveCache({ preferCache: values["cached-drive"] });
 
 const source = new URL("../public/", import.meta.url);
 const output = new URL("../dist/", import.meta.url);
 // Verifica dati e cartelle prima di sostituire l’ultima build riuscita.
-const albumPages = await generateAlbumPages();
-await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
-await cp(source, output, { recursive: true });
+const albumPages = await generateAlbumPages(undefined, { readFolder: drive.readFolder });
 const root = fileURLToPath(source);
 const target = fileURLToPath(output);
+const files = new Map();
 async function buildPages(directory = "") {
   for (const entry of await readdir(resolve(root, directory), { withFileTypes: true })) {
     if (!directory && entry.name === "partials") continue;
     const path = directory ? `${directory}/${entry.name}` : entry.name;
     if (entry.isDirectory()) await buildPages(path);
-    else if (entry.name.endsWith(".html")) {
+    else {
       const filename = resolve(root, path);
-      const html = await readFile(filename, "utf8");
-      await writeFile(resolve(target, path), await renderPage(html, filename, root));
+      const contents = await readFile(filename);
+      files.set(path, entry.name.endsWith(".html")
+        ? await renderPage(contents.toString("utf8"), filename, root) : contents);
     }
   }
 }
 await buildPages();
 for (const [path, html] of albumPages) {
-  await mkdir(dirname(resolve(target, path)), { recursive: true });
-  await writeFile(resolve(target, path), await renderPage(html, resolve(root, path), root));
+  files.set(path, await renderPage(html, resolve(root, path), root));
 }
-await rm(new URL("partials/", output), { recursive: true, force: true });
-console.log("Sito statico pronto in dist/.");
+const result = await writeOutput(target, files);
+console.log(`Sito statico pronto in dist/: ${result.updated} file aggiornati, ${result.removed} rimossi.`);
+console.log(`Drive: ${drive.stats.checked} cartelle verificate, ${drive.stats.changed} elenchi aggiornati, ${drive.stats.cached} letti dalla cache.`);
