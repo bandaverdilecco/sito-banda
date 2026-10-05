@@ -23,6 +23,9 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 24px;
 }
+html:has(.section-index) {
+  scroll-padding-top: calc(var(--section-index-height, 66px) + 24px);
+}
 body {
   margin: 0;
   background: var(--paper);
@@ -557,7 +560,7 @@ main > :nth-child(even of .section) {
   --year-background: var(--surface);
   position: relative;
   isolation: isolate;
-  scroll-margin-top: 100px;
+  scroll-margin-top: calc(-1 * var(--section-inset, 0px));
 }
 /* Colore a tutta larghezza senza cambiare dimensioni o spazi dei contenuti. */
 .album-year::before,
@@ -854,7 +857,7 @@ body.gallery-open {
   text-underline-offset: 4px;
 }
 .content-block {
-  scroll-margin-top: 100px;
+  scroll-margin-top: calc(-1 * var(--section-inset, 0px));
 }
 .block-split {
   display: grid;
@@ -1458,10 +1461,6 @@ summary:focus-visible {
     --archive-start: 40px;
     --archive-end: 60px;
   }
-  .album-year,
-  .news-year {
-    scroll-margin-top: 24px;
-  }
   .album-grid {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -1475,9 +1474,6 @@ summary:focus-visible {
   }
   .photo-viewer {
     --viewer-margin: 4px;
-  }
-  .content-block {
-    scroll-margin-top: 24px;
   }
   .block-split,
   .history-photos,
