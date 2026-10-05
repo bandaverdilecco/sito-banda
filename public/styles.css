@@ -1095,6 +1095,35 @@ address {
   margin-bottom: 1.5em;
 }
 
+.back-to-top {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+.back-to-top[hidden] {
+  display: none;
+}
+.back-to-top:hover,
+.back-to-top:active {
+  background: var(--accent);
+  color: var(--white);
+}
+.back-to-top:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 /* Footer */
 .site-footer {
   background: var(--dark);
