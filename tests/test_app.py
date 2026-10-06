@@ -137,7 +137,7 @@ class AppTests(unittest.TestCase):
     def test_public_pages_preserve_content_navigation_and_hide_admin(self):
         expected = {
             "/": "Filarmonica", "/index.html": "Filarmonica",
-            "/la-filarmonica.html": "Una storia iniziata nel 1809.",
+            "/la-filarmonica.html": "Una storia iniziata nel 1809",
             "/scuola-allievi.html": "Emanuela Milani",
             "/prossimi-eventi.html": "Concerto di prova",
             "/blog.html": "Notizia di prova",

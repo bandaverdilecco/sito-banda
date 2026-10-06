@@ -39,7 +39,8 @@
               Corpo Musicale Giuseppe Verdi.
             </p>
           </div>
-          <div class="history-photos">
+          <div class="history-photos" role="group" aria-label="Fotografie storiche della Filarmonica">
+            <a class="gallery-photo" href="/assets/storia-1907.jpg" aria-label="Ingrandisci foto storica 1">
             <img
               src="/assets/storia-1907.jpg"
               alt="Foto storica dei musicisti della Filarmonica con strumenti e divise ornate"
@@ -47,6 +48,8 @@
               height="533"
               loading="lazy"
             />
+            </a>
+            <a class="gallery-photo" href="/assets/storia-archivio.jpg" aria-label="Ingrandisci foto storica 2">
             <img
               src="/assets/storia-archivio.jpg"
               alt="Foto d’archivio della banda in uniforme, disposta in file davanti a un edificio"
@@ -54,6 +57,8 @@
               height="510"
               loading="lazy"
             />
+            </a>
+            <a class="gallery-photo" href="/assets/storia-gruppo.jpg" aria-label="Ingrandisci foto storica 3">
             <img
               src="/assets/storia-gruppo.jpg"
               alt="Foto storica della Filarmonica davanti alla scuola maschile"
@@ -61,6 +66,7 @@
               height="563"
               loading="lazy"
             />
+            </a>
           </div>
         </div>
       </section>
@@ -226,4 +232,4 @@
       </section>
     </main>
 {% endblock %}
-
+{% block scripts %}<script src="/gallery.js" defer></script>{% endblock %}

@@ -28,6 +28,8 @@ class QuietHandler(WSGIRequestHandler):
         pass
 
 
+
+
 def run():
     output = Path('test-results')
     output.mkdir(exist_ok=True)
@@ -153,6 +155,37 @@ def run():
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestro browser Due')
                 expect(page.locator('.teacher-entry').first.locator('h3 br')).to_have_count(1)
                 expect(page.locator('.teacher-entry').first.locator('img')).to_be_visible()
+
+                for width in (1440, 390, 320):
+                    page.set_viewport_size({'width': width, 'height': 900})
+                    page.goto(origin + '/la-filarmonica.html', wait_until='domcontentloaded')
+                    history = page.locator('.history-photos')
+                    pictures = history.locator('.gallery-photo')
+                    expect(pictures).to_have_count(3)
+                    assert history.evaluate('el => el.scrollWidth <= el.clientWidth')
+                    columns = history.evaluate('el => getComputedStyle(el).gridTemplateColumns.split(" ").length')
+                    assert columns == (3 if width == 1440 else 1)
+                    pictures.nth(1).click()
+                    viewer = page.get_by_role('dialog', name='Galleria fotografica')
+                    expect(viewer).to_be_visible()
+                    expect(viewer.locator('.photo-viewer-counter')).to_have_text('Foto 2 di 3')
+                    expect(viewer.locator('img')).to_be_visible()
+                    page.get_by_role('button', name='Foto successiva', exact=True).click()
+                    expect(viewer.locator('.photo-viewer-counter')).to_have_text('Foto 3 di 3')
+                    expect(viewer.locator('img')).to_have_attribute('src', origin + '/assets/storia-gruppo.jpg')
+                    page.keyboard.press('ArrowLeft')
+                    expect(viewer.locator('.photo-viewer-counter')).to_have_text('Foto 2 di 3')
+                    page.get_by_role('button', name='Foto precedente', exact=True).click()
+                    expect(viewer.locator('.photo-viewer-counter')).to_have_text('Foto 1 di 3')
+                    page.get_by_role('button', name='Chiudi galleria', exact=True).click()
+                    expect(viewer).not_to_be_visible()
+                    expect(pictures.nth(1)).to_be_focused()
+                    pictures.last.click()
+                    expect(viewer.locator('.photo-viewer-counter')).to_have_text('Foto 3 di 3')
+                    page.keyboard.press('Escape')
+                    expect(viewer).not_to_be_visible()
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                    history.screenshot(path=output / f'history-gallery-{width}.png')
 
                 page.set_viewport_size({'width': 390, 'height': 844})
                 for path in ('/', '/scuola-allievi.html', '/admin', '/admin/notizie/new',
