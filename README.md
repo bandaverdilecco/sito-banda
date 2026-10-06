@@ -29,7 +29,7 @@ Per cambiare la password di un account esistente:
 .venv/bin/python -m flask --app app create-admin --reset-password
 ```
 
-Il cambio password revoca le sessioni già aperte dell’account. Il comando opera sullo stesso database usato dal sito: in produzione imposta anche qui `CMS_INSTANCE_PATH` con il percorso del servizio.
+Il cambio password revoca le sessioni già aperte dell’account. Il comando opera sullo stesso database usato dal sito: in produzione imposta anche qui `APP_INSTANCE_PATH` con il percorso del servizio.
 
 Se esistono più amministratori, il comando elenca gli ID disponibili: aggiungi `--admin-id ID` per scegliere quale password cambiare. I database precedenti vengono aggiornati automaticamente all’avvio, eliminando i nomi utente e conservando password e sessioni.
 
@@ -60,7 +60,7 @@ Le aree dei contenuti permettono di aggiungere, modificare ed eliminare le sched
 
 Dopo il salvataggio rimani nel modulo di modifica, con un messaggio di conferma. Anche un nuovo contenuto si apre nel proprio modulo, così puoi continuare a modificarlo senza crearne una copia. Per un album, usa **Gestisci le foto** per passare alle fotografie.
 
-L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/blog/concerto-autunno.html` e `/foto/concerto-autunno.html`. Mantienilo invariato quando un collegamento è già stato condiviso.
+L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/notizie/concerto-autunno.html` e `/foto/concerto-autunno.html`. Mantienilo invariato quando un collegamento è già stato condiviso.
 
 Per eventi e notizie puoi indicare una data completa `AAAA-MM-GG` oppure soltanto mese e anno `AAAA-MM`. Anche gli album accettano entrambi i formati e possono avere più date separate da virgole, per esempio `2026-10-06, 2026-10-07`. Le date vengono ordinate e i duplicati rimossi; la prima data determina l’ordinamento e l’anno dell’album nell’archivio. Tutte le date compaiono nella scheda e nella galleria. Gli album esistenti con solo mese e anno restano validi.
 
@@ -139,7 +139,7 @@ Il percorso predefinito è `instance/` nella cartella del progetto:
 - `uploads/`: immagini caricate dal pannello;
 - `secret.key`: chiave creata automaticamente al primo avvio, se `SECRET_KEY` non è già configurata nell’ambiente.
 
-Per usare una cartella persistente esterna al checkout, imposta `CMS_INSTANCE_PATH` **prima** di creare l’amministratore o avviare il sito. La cartella deve essere scrivibile dall’utente del servizio. Tutte le istanze dello stesso sito devono utilizzare gli stessi dati e la stessa chiave.
+Per usare una cartella persistente esterna al checkout, imposta `APP_INSTANCE_PATH` **prima** di creare l’amministratore o avviare il sito. La cartella deve essere scrivibile dall’utente del servizio. Tutte le istanze dello stesso sito devono utilizzare gli stessi dati e la stessa chiave.
 
 Esempio di backup coerente del database, anche mentre il sito è in esecuzione:
 
@@ -147,30 +147,30 @@ Esempio di backup coerente del database, anche mentre il sito è in esecuzione:
 .venv/bin/python -m flask --app app backup-db /percorso/backup/site-2026-10-06.sqlite3
 ```
 
-La directory di destinazione deve esistere e il nome del file deve essere nuovo. Imposta lo stesso `CMS_INSTANCE_PATH` del servizio anche quando esegui questo comando. Il backup include i dati già confermati nel journal SQLite; evita di copiare soltanto `site.sqlite3` a mano mentre l’applicazione è attiva.
+La directory di destinazione deve esistere e il nome del file deve essere nuovo. Imposta lo stesso `APP_INSTANCE_PATH` del servizio anche quando esegui questo comando. Il backup include i dati già confermati nel journal SQLite; evita di copiare soltanto `site.sqlite3` a mano mentre l’applicazione è attiva.
 
 Copia anche `uploads/` e conserva la chiave delle sessioni o il valore di `SECRET_KEY`. Salva i backup fuori dalla cartella pubblica e dal repository. Per un ripristino, arresta il servizio, conserva una copia dell’istanza corrente e ripristina database e immagini nella cartella persistente prima di riavviarlo. Il backup del database non contiene le fotografie remote di Google Drive.
 
 ## Esecuzione in produzione
 
-Il sito richiede un processo Python persistente e un disco scrivibile. Un hosting che serve soltanto file statici non esegue il CMS.
+Il sito richiede un processo Python persistente e un disco scrivibile. Un hosting che serve soltanto file statici non esegue l’app.
 
 Installa le dipendenze sul server, scegli una cartella persistente e crea l’account amministratore nello stesso ambiente. Per avviare Waitress dietro il reverse proxy Nginx fornito:
 
 ```bash
-export CMS_INSTANCE_PATH=/var/lib/filarmonica
-export CMS_HTTPS=1
-export CMS_TRUST_PROXY=1
+export APP_INSTANCE_PATH=/var/lib/filarmonica
+export APP_HTTPS=1
+export APP_TRUST_PROXY=1
 .venv/bin/python -m flask --app app serve --host 127.0.0.1 --port 8080
 ```
 
 Il comando Flask `serve` avvia Waitress; host e porta predefiniti sono `127.0.0.1:8080`. Usa un gestore di servizi per mantenerlo attivo e riavviarlo dopo il riavvio del server. Il comando `flask run` è destinato allo sviluppo locale.
 
-Il file `nginx.conf` inoltra le richieste a Waitress e imposta il limite di caricamento e il timeout per la sincronizzazione. Adatta dominio e certificato e configura **HTTPS** sul proxy: il file fornito non installa un certificato e non abilita TLS automaticamente.
+Il file `nginx.conf` è la configurazione di un singolo sito, da includere nel blocco `http` di Nginx (non sostituisce il file principale `/etc/nginx/nginx.conf`). Sostituisci `banda.example.it` con il dominio reale. Inoltra le richieste a Waitress e imposta il limite di caricamento e il timeout per la sincronizzazione. Parte in HTTP: usa `APP_HTTPS=0` durante la configurazione iniziale, poi installa un certificato e abilita **HTTPS** sul proxy prima di passare a `APP_HTTPS=1`. Il file fornito non installa un certificato e non abilita TLS automaticamente.
 
-`CMS_HTTPS=1` rende sicuri i cookie di sessione per l’uso con HTTPS. Non impostarlo nell’anteprima locale su HTTP, altrimenti il browser non invierà il cookie necessario al login.
+`APP_HTTPS=1` rende sicuri i cookie di sessione per l’uso con HTTPS. Non impostarlo nell’anteprima locale su HTTP, altrimenti il browser non invierà il cookie necessario al login.
 
-Abilita `CMS_TRUST_PROXY=1` soltanto quando Waitress è raggiungibile esclusivamente tramite il proxy controllato, come nella configurazione fornita: Nginx sovrascrive gli header dell’indirizzo client e dello schema. In questo modo il limite dei tentativi di accesso distingue i visitatori reali dietro il proxy.
+Abilita `APP_TRUST_PROXY=1` soltanto quando Waitress è raggiungibile esclusivamente tramite il proxy controllato, come nella configurazione fornita: Nginx sovrascrive gli header dell’indirizzo client e dello schema. In questo modo il limite dei tentativi di accesso distingue i visitatori reali dietro il proxy.
 
 La cartella persistente deve sopravvivere agli aggiornamenti del codice e alle nuove distribuzioni. SQLite è adatto a questa installazione su un singolo server; non collocare istanze indipendenti su dischi effimeri aspettandoti che condividano i contenuti.
 

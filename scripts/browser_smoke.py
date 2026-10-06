@@ -93,12 +93,12 @@ def run():
                 page.locator('.editor-content').fill('Testo dal nuovo editor visuale.')
                 page.get_by_role('button', name='Salva contenuto').click()
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/notizie/\d+/edit$'))
-                page.goto(origin + '/blog/notizia-prova-browser.html')
+                page.goto(origin + '/notizie/notizia-prova-browser.html')
                 expect(page.locator('article')).to_contain_text('Testo dal nuovo editor visuale.')
                 for selector in ('img', 'h3', '.news-card-copy p'):
-                    page.goto(origin + '/blog.html')
-                    page.locator('a.news-link[href="/blog/notizia-prova-browser.html"]').locator(selector).click()
-                    expect(page).to_have_url(origin + '/blog/notizia-prova-browser.html')
+                    page.goto(origin + '/notizie.html')
+                    page.locator('a.news-link[href="/notizie/notizia-prova-browser.html"]').locator(selector).click()
+                    expect(page).to_have_url(origin + '/notizie/notizia-prova-browser.html')
 
                 page.goto(origin + '/admin/notizie/new')
                 page.get_by_label('Titolo', exact=False).fill('Notizia archivio browser')

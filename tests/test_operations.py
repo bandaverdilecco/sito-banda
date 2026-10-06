@@ -39,6 +39,17 @@ class OperationsTests(unittest.TestCase):
         templates['reload-test.html'] = 'Seconda modifica'
         self.assertEqual(client.get('/template-test').get_data(as_text=True), 'Seconda modifica')
 
+    def test_app_environment_configures_storage_and_secure_cookies(self):
+        instance = self.path / 'configured-instance'
+        with patch.dict(os.environ, APP_INSTANCE_PATH=str(instance), APP_HTTPS='1'):
+            app = create_app({'TESTING': True})
+        self.assertEqual(Path(app.instance_path), instance)
+        self.assertEqual(Path(app.config['DATABASE']), instance / 'site.sqlite3')
+        self.assertEqual(Path(app.config['UPLOAD_FOLDER']), instance / 'uploads')
+        self.assertTrue(app.config['SESSION_COOKIE_SECURE'])
+        with patch.dict(os.environ, APP_INSTANCE_PATH=str(instance), APP_HTTPS='0'):
+            self.assertFalse(create_app({'TESTING': True}).config['SESSION_COOKIE_SECURE'])
+
     def test_new_installation_starts_empty_and_stays_empty_after_restart(self):
         for app in (self.app, create_app(self.config)):
             with app.app_context():
@@ -48,7 +59,7 @@ class OperationsTests(unittest.TestCase):
                         self.assertEqual(db.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0], 0)
                 self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0], '1')
             client = app.test_client()
-            for path in ('/', '/prossimi-eventi.html', '/blog.html', '/foto.html', '/admin'):
+            for path in ('/', '/prossimi-eventi.html', '/notizie.html', '/foto.html', '/admin'):
                 with self.subTest(path=path):
                     self.assertEqual(client.get(path).status_code, 200)
 
@@ -186,7 +197,7 @@ class OperationsTests(unittest.TestCase):
         serve.assert_called_once_with(self.app, host='127.0.0.1', port=9090, max_request_body_size=16 * 1024 * 1024)
 
     def test_production_command_trusts_only_configured_local_proxy(self):
-        with patch.dict(os.environ, CMS_TRUST_PROXY='1'):
+        with patch.dict(os.environ, APP_TRUST_PROXY='1'):
             app = create_app(self.config)
             with patch('waitress.serve') as serve:
                 result = app.test_cli_runner().invoke(args=['serve'])

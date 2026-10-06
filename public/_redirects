@@ -1,5 +1,5 @@
 # Compatibilità con i vecchi indirizzi del sito.
-/archivio-notizie /blog.html 301
+/archivio-notizie /notizie.html 301
 /foto /foto.html 301
 /foto-vecchie /foto.html 301
 /foto-vecchie.html /foto.html 301
@@ -14,11 +14,12 @@
 /sostienici /sostienici.html 301
 /contatti /contatti.html 301
 /prossimi-eventi /prossimi-eventi.html 301
-/blog /blog.html 301
-/blog/pronti-settembre-via /blog/pronti-settembre-via.html 301
-/blog/open-day-scuola /blog/open-day-scuola.html 301
-/blog/alpini-bonacina /blog/alpini-bonacina.html 301
-/blog/san-nicolo-concerto /blog/san-nicolo-concerto.html 301
+/blog /notizie.html 301
+/blog.html /notizie.html 301
+/blog/pronti-settembre-via /notizie/pronti-settembre-via.html 301
+/blog/open-day-scuola /notizie/open-day-scuola.html 301
+/blog/alpini-bonacina /notizie/alpini-bonacina.html 301
+/blog/san-nicolo-concerto /notizie/san-nicolo-concerto.html 301
 /chi-siamo-storia.html /la-filarmonica.html#storia 301
 /chi-siamo-curriculum.html /la-filarmonica.html#servizi 301
 /chi-siamo-servizi.html /la-filarmonica.html#servizi 301

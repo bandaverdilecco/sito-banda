@@ -9,7 +9,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import click
-from flask import Flask, abort, redirect, render_template, request, send_from_directory
+from flask import Flask, abort, redirect, render_template, request, send_from_directory, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.security import generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -41,11 +41,11 @@ def date_label(value):
 
 
 def create_app(test_config=None):
-    instance = Path(os.environ.get('CMS_INSTANCE_PATH', ROOT / 'instance')).resolve()
+    instance = Path(os.environ.get('APP_INSTANCE_PATH', ROOT / 'instance')).resolve()
     if test_config and test_config.get('INSTANCE_PATH'):
         instance = Path(test_config['INSTANCE_PATH']).resolve()
     app = Flask(__name__, static_folder=None, instance_path=str(instance))
-    trust_proxy = os.environ.get('CMS_TRUST_PROXY') == '1'
+    trust_proxy = os.environ.get('APP_TRUST_PROXY') == '1'
     if trust_proxy:
         # Enable only behind one controlled proxy; the bundled nginx overwrites
         # both headers, and Waitress listens exclusively on the loopback address.
@@ -55,7 +55,7 @@ def create_app(test_config=None):
         SECRET_KEY=os.environ.get('SECRET_KEY'),
         TEMPLATES_AUTO_RELOAD=True,
         SESSION_COOKIE_NAME='filarmonica_admin', SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=os.environ.get('CMS_HTTPS') == '1',
+        SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=os.environ.get('APP_HTTPS') == '1',
         PERMANENT_SESSION_LIFETIME=timedelta(hours=8), MAX_CONTENT_LENGTH=16 * 1024 * 1024,
         MAX_FORM_MEMORY_SIZE=256 * 1024, MAX_FORM_PARTS=100,
     )
@@ -112,11 +112,16 @@ def create_app(test_config=None):
     def events():
         return render_template('public/eventi.html', events=get_db().execute('SELECT * FROM events WHERE published=1 ORDER BY date,id').fetchall())
 
-    @app.get('/blog.html')
+    @app.get('/notizie.html')
     def news():
         return render_template('public/notizie.html', news=get_db().execute('SELECT * FROM news WHERE published=1 ORDER BY date DESC,id').fetchall())
 
     @app.get('/blog/<slug>.html')
+    @app.get('/blog/<slug>')
+    def legacy_article(slug):
+        return redirect(url_for('article', slug=slug), code=301)
+
+    @app.get('/notizie/<slug>.html')
     def article(slug):
         row = get_db().execute('SELECT * FROM news WHERE slug=? AND published=1', (slug,)).fetchone()
         if row is None:

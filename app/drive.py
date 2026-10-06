@@ -156,7 +156,7 @@ def _remaining(deadline: float) -> float:
 
 def _http_get(url: str, *, headers: dict[str, str], timeout: float) -> bytes:
     """Bound each request and response size; never include keys in errors."""
-    request = Request(url, headers={'User-Agent': 'FilarmonicaCMS/1.0', **headers})
+    request = Request(url, headers={'User-Agent': 'FilarmonicaApp/1.0', **headers})
     request_deadline = time.monotonic() + timeout
     try:
         with urlopen(request, timeout=timeout) as response:
