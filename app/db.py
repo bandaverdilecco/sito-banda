@@ -30,6 +30,8 @@ def init_db():
     db.execute('PRAGMA foreign_keys = OFF')
     try:
         db.execute('BEGIN IMMEDIATE')
+        if 'published' not in {row['name'] for row in db.execute('PRAGMA table_info(photos)')}:
+            db.execute('ALTER TABLE photos ADD COLUMN published INTEGER NOT NULL DEFAULT 1 CHECK(published IN (0,1))')
         if 'username' in {row['name'] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute('CREATE TABLE users_without_names (id INTEGER PRIMARY KEY, password_hash TEXT NOT NULL)')
             db.execute('INSERT INTO users_without_names SELECT id, password_hash FROM users')

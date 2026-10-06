@@ -89,6 +89,23 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT user_id FROM sessions').fetchone()[0], 7)
             self.assertEqual(db.execute('PRAGMA foreign_keys').fetchone()[0], 1)
 
+    def test_existing_photos_gain_visibility_without_losing_data(self):
+        from app.db import init_db
+
+        with self.app.app_context():
+            db = get_db()
+            db.execute('DROP TABLE photos')
+            db.execute('CREATE TABLE photos (id INTEGER PRIMARY KEY, album_id INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE, src TEXT NOT NULL, thumbnail TEXT NOT NULL DEFAULT "", original TEXT NOT NULL DEFAULT "", alt TEXT NOT NULL DEFAULT "", sort_order INTEGER NOT NULL DEFAULT 0, source TEXT NOT NULL DEFAULT "upload", UNIQUE(album_id,src))')
+            album_id = db.execute("INSERT INTO albums(slug,title,date) VALUES('old','Album esistente','2026-10')").lastrowid
+            db.execute("INSERT INTO photos(album_id,src,alt) VALUES(?, '/assets/concert.jpg', 'Foto esistente')", (album_id,))
+            db.commit()
+            init_db()
+            self.assertEqual(tuple(db.execute('SELECT src,alt,published FROM photos').fetchone()), ('/assets/concert.jpg', 'Foto esistente', 1))
+            db.execute('UPDATE photos SET published=0')
+            db.commit()
+            init_db()
+            self.assertEqual(db.execute('SELECT published FROM photos').fetchone()[0], 0)
+
     def test_password_reset_requires_id_only_when_multiple_accounts_exist(self):
         runner = self.app.test_cli_runner()
         self.assertNotEqual(runner.invoke(args=['create-admin', '--reset-password']).exit_code, 0)
@@ -147,7 +164,7 @@ class OperationsTests(unittest.TestCase):
             with patch('app.content.read_drive_folder', return_value=initial):
                 self.assertEqual(sync_album(album), 2)
             kept = db.execute("SELECT * FROM photos WHERE src LIKE '%kept-photo=%'").fetchone()
-            db.execute('UPDATE photos SET alt=?,sort_order=? WHERE id=?', ('Descrizione personalizzata', -3, kept['id']))
+            db.execute('UPDATE photos SET alt=?,sort_order=?,published=0 WHERE id=?', ('Descrizione personalizzata', -3, kept['id']))
             db.execute('INSERT INTO photos(album_id,src,alt,source) VALUES(?,?,?,?)', (album, '/assets/concert.jpg', 'Manuale', 'link'))
             db.commit()
             refreshed = [{'id': 'kept-photo', 'resourceKey': 'updated-key'}, {'id': 'new-photo'}]
@@ -156,6 +173,7 @@ class OperationsTests(unittest.TestCase):
             updated = db.execute('SELECT * FROM photos WHERE id=?', (kept['id'],)).fetchone()
             self.assertEqual(updated['alt'], 'Descrizione personalizzata')
             self.assertEqual(updated['sort_order'], -3)
+            self.assertEqual(updated['published'], 0)
             self.assertIn('updated-key', updated['original'])
             self.assertEqual(db.execute("SELECT count(*) FROM photos WHERE src LIKE '%removed-photo=%'").fetchone()[0], 0)
             self.assertEqual(db.execute("SELECT count(*) FROM photos WHERE source='link'").fetchone()[0], 1)

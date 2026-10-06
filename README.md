@@ -51,34 +51,42 @@ Prima dell’accesso, `/admin` mostra il modulo di login. Dopo l’accesso lo st
 | --- | --- |
 | Eventi | Titolo, indirizzo breve, data, luogo, descrizione e orario |
 | Notizie | Titolo, indirizzo breve, data, sommario, testo formattato, immagine ed eventuale articolo esterno |
-| Foto | Album, mese e anno, descrizione e crediti, copertina, cartella Drive e fotografie di ciascun album |
+| Foto | Album, una o più date, descrizione e crediti, copertina, cartella Drive e fotografie di ciascun album |
 | Homepage | Appuntamenti da mostrare e una notizia in evidenza |
 | Scopri la Filarmonica | Titolo della sezione e schede con testi, collegamenti e ordine |
 | I nostri insegnanti | Nomi, strumenti, fotografie, descrizioni delle immagini e ordine |
 
-Le aree dei contenuti permettono di aggiungere, modificare ed eliminare le schede. L’opzione **Pubblicato sul sito** controlla la visibilità: disattivala per conservare una bozza. L’eliminazione richiede una conferma e non dispone di annullamento dal pannello; per recuperare dati eliminati serve un backup.
+Le aree dei contenuti permettono di aggiungere, modificare ed eliminare le schede. L’opzione **Nascosto** controlla la visibilità: attivala per conservare una bozza. L’eliminazione richiede una conferma e non dispone di annullamento dal pannello; per recuperare dati eliminati serve un backup.
+
+Dopo il salvataggio rimani nel modulo di modifica, con un messaggio di conferma. Anche un nuovo contenuto si apre nel proprio modulo, così puoi continuare a modificarlo senza crearne una copia. Per un album, usa **Gestisci le foto** per passare alle fotografie.
 
 L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/blog/concerto-autunno.html` e `/foto/concerto-autunno.html`. Mantienilo invariato quando un collegamento è già stato condiviso.
 
-Per eventi e notizie puoi indicare una data completa `AAAA-MM-GG` oppure soltanto mese e anno `AAAA-MM`. Gli album usano `AAAA-MM`. Le date originali che indicavano solo il mese mantengono questa precisione.
+Per eventi e notizie puoi indicare una data completa `AAAA-MM-GG` oppure soltanto mese e anno `AAAA-MM`. Anche gli album accettano entrambi i formati e possono avere più date separate da virgole, per esempio `2026-10-06, 2026-10-07`. Le date vengono ordinate e i duplicati rimossi; la prima data determina l’ordinamento e l’anno dell’album nell’archivio. Tutte le date compaiono nella scheda e nella galleria. Gli album esistenti con solo mese e anno restano validi.
+
+Sul sito le date sono abbreviate senza ripetere mese e anno comuni: `6 - 7 ottobre 2026`, `6 ottobre - 6 novembre 2026`, oppure `31 dicembre 2026 - 2 gennaio 2027`. Nel modulo si continuano a inserire le date complete separate da virgole.
 
 In **Homepage** (`/admin/home`) seleziona quanti appuntamenti vuoi e una sola notizia per “Ultime notizie”. Puoi anche lasciare entrambe le sezioni senza selezioni. Gli eventi scelti sono mostrati in ordine cronologico, senza limite di numero; rimangono selezionati anche dopo la loro data. Le bozze e i contenuti eliminati non vengono mostrati né sostituiti automaticamente.
 
 Fino al primo salvataggio di questa pagina resta la selezione automatica precedente: tre prossimi eventi e la notizia pubblicata più recente. Il salvataggio passa alla selezione manuale.
 
-In **Scopri la Filarmonica** (`/admin/musica-insieme`) puoi cambiare “La musica si vive insieme.” nel campo **Titolo nella home**, aggiungere o modificare le schede e impostarne l’ordine. In **I nostri insegnanti** (`/admin/insegnanti`) puoi gestire le schede degli insegnanti, caricare le fotografie e disporle nell’ordine desiderato. Per una scheda condivisa, scrivi ogni nome su una riga distinta.
+In **Scopri la Filarmonica** (`/admin/musica-insieme`) puoi cambiare “La musica si vive insieme.” nel campo **Titolo nella home**, aggiungere o modificare le schede. In **I nostri insegnanti** (`/admin/insegnanti`) puoi gestire le schede degli insegnanti e caricare le fotografie. Usa le frecce ↑ e ↓ negli elenchi per spostare una scheda di una posizione: le nuove schede vengono aggiunte in fondo e modificarle non ne cambia l’ordine. Per una scheda condivisa, scrivi ogni nome su una riga distinta.
 
 Il testo delle notizie dispone di comandi di formattazione. Il server ammette paragrafi, titoli, elenchi, collegamenti e immagini e pulisce l’HTML al salvataggio. Inserendo un **Link articolo esterno**, la scheda pubblica collega direttamente la fonte esterna.
 
+La casella **Nascosto** si trova negli elenchi di eventi, notizie, album, schede e insegnanti: selezionata nasconde la voce e la rende sbiadita nel pannello, deselezionata la pubblica. Salva automaticamente senza ricaricare la pagina. I nuovi contenuti sono pubblicati; le modifiche ai testi non cambiano lo stato di pubblicazione.
+
 ## Album e fotografie
 
-Crea un album dall’area Foto e poi apri **Gestisci le foto**. Puoi caricare una fotografia, indicare un URL HTTPS, cambiare la descrizione e il numero d’ordine, sostituire l’immagine o rimuoverla dall’album. I numeri d’ordine più piccoli vengono mostrati prima. La copertina dell’album si modifica separatamente.
+Crea un album dall’area Foto e poi apri **Gestisci le foto**. Puoi caricare una fotografia, indicare un URL HTTPS, cambiare la descrizione, sostituire l’immagine o rimuoverla dall’album. Le nuove foto vengono aggiunte in fondo; modificare una foto non ne cambia la posizione. La copertina dell’album si modifica separatamente.
 
 I caricamenti accettano JPG, PNG, WebP e GIF, fino a **16 MB per richiesta** e **30 megapixel per immagine**. Il server applica l’orientamento della foto, riduce il lato maggiore a 3200 pixel quando necessario e salva una copia WebP. Le GIF diventano immagini statiche. Il download delle immagini caricate restituisce questa copia elaborata; conserva separatamente i file originali se ti servono alla risoluzione iniziale.
 
 Le immagini possono anche usare percorsi già presenti nel sito, come `/assets/foto/copertina.jpg`, o URL HTTPS. Il pannello converte i collegamenti ai singoli file Google Drive in URL visualizzabili.
 
 Eliminare una fotografia dal pannello elimina il suo riferimento nell’album. I file già caricati in `uploads/` vengono conservati, anche quando un riferimento viene rimosso o sostituito.
+
+Per nascondere una fotografia senza eliminarla, attiva **Nascondi** sulla sua scheda nella gestione delle foto: la scelta si salva subito e l’immagine appare attenuata. Disattiva la casella per mostrarla di nuovo. Senza JavaScript usa **Salva visibilità**. La stessa opzione resta disponibile in **Modifica**. La sincronizzazione Drive conserva questa scelta per le foto ancora presenti nell’album. I collegamenti diretti ai file e la copertina dell’album restano invariati.
 
 ### Sincronizzare Google Drive
 

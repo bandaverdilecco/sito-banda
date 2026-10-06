@@ -21,9 +21,23 @@ MONTHS = ('Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio'
 
 
 def date_label(value):
-    parts = str(value).split('-')
-    month = MONTHS[int(parts[1]) - 1]
-    return f'{int(parts[2])} {month.lower()} {parts[0]}' if len(parts) == 3 else f'{month} {parts[0]}'
+    dates = [item.strip().split('-') for item in str(value).split(',')]
+    labels = []
+    for index, parts in enumerate(dates):
+        following = dates[index + 1] if index + 1 < len(dates) else None
+        same_year = following is not None and parts[0] == following[0]
+        same_month = same_year and parts[1] == following[1] and len(parts) == len(following) == 3
+        month = MONTHS[int(parts[1]) - 1].lower()
+        if len(parts) == 3:
+            label = str(int(parts[2]))
+            if not same_month:
+                label += ' ' + month
+        else:
+            label = month.capitalize() if index == 0 else month
+        if not same_year:
+            label += ' ' + parts[0]
+        labels.append(label)
+    return ' - '.join(labels)
 
 
 def create_app(test_config=None):
@@ -111,14 +125,16 @@ def create_app(test_config=None):
 
     @app.get('/foto.html')
     def photos():
-        return render_template('public/foto.html', albums=get_db().execute('SELECT * FROM albums WHERE published=1 ORDER BY date DESC,id').fetchall())
+        return render_template('public/foto.html', albums=get_db().execute(
+            "SELECT * FROM albums WHERE published=1 ORDER BY substr(date,1,instr(date || ',',',')-1) DESC,id"
+        ).fetchall())
 
     @app.get('/foto/<slug>.html')
     def album(slug):
         row = get_db().execute('SELECT * FROM albums WHERE slug=? AND published=1', (slug,)).fetchone()
         if row is None:
             abort(404)
-        images = get_db().execute('SELECT * FROM photos WHERE album_id=? ORDER BY sort_order,id', (row['id'],)).fetchall()
+        images = get_db().execute('SELECT * FROM photos WHERE album_id=? AND published=1 ORDER BY sort_order,id', (row['id'],)).fetchall()
         return render_template('public/album.html', album=row, photos=images)
 
     for page in ('contatti', 'sostienici', 'la-filarmonica'):

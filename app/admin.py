@@ -5,7 +5,7 @@ import hashlib
 import secrets
 import time
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import content
@@ -145,7 +145,8 @@ def logout():
 @login_required
 def listing(section):
     config = _section(section)
-    records = [dict(row) for row in get_db().execute(f"SELECT * FROM {config['table']} ORDER BY date DESC, id DESC").fetchall()]
+    date_order = "substr(date,1,instr(date || ',',',')-1)" if section == 'foto' else 'date'
+    records = [dict(row) for row in get_db().execute(f"SELECT * FROM {config['table']} ORDER BY {date_order} DESC, id DESC").fetchall()]
     return render_template("admin/elenco.html", section=section, records=records)
 
 
@@ -155,11 +156,10 @@ def listing(section):
 def edit(section, item_id=None):
     _section(section)
     existing = _record(section, item_id) if item_id is not None else None
-    values = dict(existing) if existing else {"published": 1, "sort_order": 0}
+    values = dict(existing) if existing else {"published": 1}
     error = None
     if request.method == "POST":
         values.update(request.form.to_dict())
-        values["published"] = "published" in request.form
         try:
             data = content.validate_content(section, request.form, request.files, existing=existing)
             saved_id = content.save_content(section, data, item_id)
@@ -167,11 +167,33 @@ def edit(section, item_id=None):
             error = exc.args[0]
         else:
             flash("content_saved" if existing else "content_added", "success")
-            if section == "foto" and existing is None:
-                return redirect(url_for("admin.photos", album_id=saved_id))
-            return redirect(url_for("admin.listing", section=section))
+            return redirect(url_for("admin.edit", section=section, item_id=saved_id))
     return render_template("admin/modifica.html", section=section, record=existing,
                            values=values, error=error), (422 if error else 200)
+
+
+@bp.post('/<section>/<int:item_id>/publication')
+@login_required
+def publication(section, item_id):
+    sections = {name: (config['table'], 'admin.listing') for name, config in content.SECTIONS.items()}
+    sections.update({'musica-insieme': ('home_features', 'editorial.features'),
+                     'insegnanti': ('teachers', 'editorial.teachers')})
+    if section not in sections:
+        abort(404)
+    values = request.form.getlist('hidden')
+    if len(values) > 1 or (values and values[0] != '1'):
+        abort(400)
+    published = int(not values)
+    table, endpoint = sections[section]
+    db = get_db()
+    with db:
+        result = db.execute(f'UPDATE {table} SET published=? WHERE id=?', (published, item_id))
+        if result.rowcount != 1:
+            abort(404)
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify(published=bool(published))
+    return redirect(url_for(endpoint, **({'section': section} if endpoint == 'admin.listing' else {}),
+                            _anchor=f'entry-{item_id}'))
 
 
 @bp.route("/<section>/<int:item_id>/delete", methods=["GET", "POST"])
@@ -191,7 +213,7 @@ def delete(section, item_id):
 def photos(album_id):
     album = _record("foto", album_id)
     error = None
-    values = {"sort_order": 0}
+    values = {}
     if request.method == "POST":
         values = request.form.to_dict()
         try:
@@ -221,14 +243,32 @@ def edit_photo(album_id, photo_id):
     error = None
     if request.method == "POST":
         values.update(request.form.to_dict())
+        values['hidden'] = 'hidden' in request.form
         try:
             content.save_photo(album_id, request.form, request.files, photo_id)
         except ValueError as exc:
             error = exc.args[0]
         else:
             flash("photo_saved", "success")
-            return redirect(url_for("admin.photos", album_id=album_id))
+            return redirect(url_for("admin.edit_photo", album_id=album_id, photo_id=photo_id))
     return render_template("admin/modifica-foto.html", section="foto", album=album, photo=photo, values=values, error=error), (422 if error else 200)
+
+
+@bp.post("/foto/<int:album_id>/photos/<int:photo_id>/visibility")
+@login_required
+def photo_visibility(album_id, photo_id):
+    _photo(album_id, photo_id)
+    values = request.form.getlist('hidden')
+    if len(values) > 1 or (values and values[0] not in ('', '1')):
+        abort(400)
+    published = int(not values or values[0] != '1')
+    db = get_db()
+    with db:
+        db.execute('UPDATE photos SET published=? WHERE id=? AND album_id=?', (published, photo_id, album_id))
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify(published=bool(published))
+    flash('photo_saved', 'success')
+    return redirect(url_for('admin.photos', album_id=album_id, _anchor=f'photo-{photo_id}'))
 
 
 @bp.route("/foto/<int:album_id>/photos/<int:photo_id>/delete", methods=["GET", "POST"])

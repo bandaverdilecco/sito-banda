@@ -18,11 +18,9 @@
     <input name="image" id="image" value="{{ values.get('image', '') }}" placeholder="https://… oppure /assets/…" aria-describedby="image-help">
     <label class="upload-label" for="image_upload">Oppure carica una fotografia</label>
     <input type="file" name="image_upload" id="image_upload" accept="image/jpeg,image/png,image/webp,image/gif" aria-describedby="image-help">
-    <p class="help" id="image-help">Facoltativa: inserisci un collegamento o carica un file JPG, PNG, WebP o GIF.</p>
+    <p class="help" id="image-help">Facoltativa: link HTTPS (anche Google Drive), percorso /assets/… o /uploads/…, oppure file JPG, PNG, WebP o GIF.</p>
   </div>
   <div class="field"><label for="image_alt">Descrizione della fotografia</label><input name="image_alt" id="image_alt" type="text" value="{{ values.get('image_alt', '') }}"></div>
-  <div class="field"><label for="sort_order">Ordine</label><input name="sort_order" id="sort_order" type="number" step="1" min="-1000000" max="1000000" value="{{ values.get('sort_order', 0) }}" aria-describedby="order-help"><p class="help" id="order-help">I numeri più bassi compaiono per primi.</p></div>
-  <div class="field checkbox-field"><label for="published"><input type="checkbox" name="published" id="published" value="1" {% if values.get('published') %}checked{% endif %}> Pubblicato sul sito</label><p class="help">Se disattivato, l’insegnante rimane in bozza.</p></div>
   <div class="form-actions"><button class="button" type="submit">Salva insegnante</button><a class="button secondary" href="{{ url_for('editorial.teachers') }}">Annulla</a></div>
 </form>
 {% endblock %}

@@ -7,7 +7,7 @@ import sqlite3
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, url_for
 from PIL import Image
 
 from . import content
@@ -115,10 +115,6 @@ def _text(form, name, *, required=False, maximum=2000):
     return value
 
 
-def _publication(form):
-    return int(form.get('published', '') in ('on', '1', 'true', 'yes'))
-
-
 def _feature_url(value):
     if '\\' in value or any(ord(character) < 32 for character in value):
         raise ValueError('feature_url_invalid')
@@ -138,8 +134,6 @@ def _feature_data(form):
                       maximum=10_000 if name == 'description' else 2000)
             for name in ('eyebrow', 'title', 'description', 'url', 'link_label')}
     data['url'] = _feature_url(data['url'])
-    data['sort_order'] = content.order(form.get('sort_order', '0'))
-    data['published'] = _publication(form)
     return data
 
 
@@ -161,8 +155,6 @@ def _image_size(source):
 def _teacher_data(form, files, existing):
     data = {name: _text(form, name, required=name in ('name', 'instrument'))
             for name in ('name', 'instrument', 'image', 'image_alt')}
-    data['sort_order'] = content.order(form.get('sort_order', '0'))
-    data['published'] = _publication(form)
     upload = files.get('image_upload')
     # Image writes happen only after every non-file field has passed validation.
     data['image'] = content.store_image(upload) if upload and upload.filename else content.image_url(data['image'])
@@ -184,11 +176,41 @@ def _save(table, data, item_id):
     db = get_db()
     with db:
         if item_id is None:
+            db.execute('BEGIN IMMEDIATE')
+            data['sort_order'] = db.execute(f'SELECT coalesce(max(sort_order),-1)+1 FROM {table}').fetchone()[0]
             columns = ','.join(data)
             placeholders = ','.join('?' for _ in data)
             return db.execute(f'INSERT INTO {table} ({columns}) VALUES ({placeholders})', tuple(data.values())).lastrowid
         db.execute(f'UPDATE {table} SET ' + ','.join(f'{key}=?' for key in data) + ' WHERE id=?', (*data.values(), item_id))
         return item_id
+
+
+@bp.post('/<section>/<int:item_id>/move')
+@login_required
+def move_entry(section, item_id):
+    sections = {'musica-insieme': ('home_features', 'editorial.features'),
+                'insegnanti': ('teachers', 'editorial.teachers')}
+    if section not in sections:
+        abort(404)
+    directions = request.form.getlist('direction')
+    if len(directions) != 1 or directions[0] not in ('up', 'down'):
+        abort(400)
+    table, endpoint = sections[section]
+    db = get_db()
+    with db:
+        db.execute('BEGIN IMMEDIATE')
+        ids = [row['id'] for row in db.execute(f'SELECT id FROM {table} ORDER BY sort_order,id')]
+        if item_id not in ids:
+            abort(404)
+        index = ids.index(item_id)
+        target = index + (-1 if directions[0] == 'up' else 1)
+        if 0 <= target < len(ids):
+            ids[index], ids[target] = ids[target], ids[index]
+            # Normalize tied and sparse legacy positions while retaining all other entries.
+            db.executemany(f'UPDATE {table} SET sort_order=? WHERE id=?', enumerate(ids))
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify(ids=ids)
+    return redirect(url_for(endpoint, _anchor=f'entry-{item_id}'))
 
 
 @bp.route('/musica-insieme', methods=['GET', 'POST'])
@@ -222,18 +244,17 @@ def features():
 @login_required
 def feature_edit(item_id=None):
     record = _record('home_features', item_id) if item_id is not None else None
-    values = dict(record) if record else {'published': 1, 'sort_order': 0}
+    values = dict(record) if record else {'published': 1}
     error = None
     if request.method == 'POST':
         values.update(request.form.to_dict())
-        values['published'] = _publication(request.form)
         try:
-            _save('home_features', _feature_data(request.form), item_id)
+            saved_id = _save('home_features', _feature_data(request.form), item_id)
         except ValueError as exc:
             error = exc.args[0]
         else:
             flash('content_saved' if record else 'content_added', 'success')
-            return redirect(url_for('editorial.features'))
+            return redirect(url_for('editorial.feature_edit', item_id=saved_id))
     return render_template('admin/modifica-scheda.html', section='musica-insieme',
         record=record, values=values, error=error), (422 if error else 200)
 
@@ -250,18 +271,17 @@ def teachers():
 @login_required
 def teacher_edit(item_id=None):
     record = _record('teachers', item_id) if item_id is not None else None
-    values = dict(record) if record else {'published': 1, 'sort_order': 0}
+    values = dict(record) if record else {'published': 1}
     error = None
     if request.method == 'POST':
         values.update(request.form.to_dict())
-        values['published'] = _publication(request.form)
         try:
-            _save('teachers', _teacher_data(request.form, request.files, record), item_id)
+            saved_id = _save('teachers', _teacher_data(request.form, request.files, record), item_id)
         except ValueError as exc:
             error = exc.args[0]
         else:
             flash('content_saved' if record else 'content_added', 'success')
-            return redirect(url_for('editorial.teachers'))
+            return redirect(url_for('editorial.teacher_edit', item_id=saved_id))
     return render_template('admin/modifica-insegnante.html', section='insegnanti',
         record=record, values=values, error=error), (422 if error else 200)
 

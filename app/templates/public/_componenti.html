@@ -7,6 +7,7 @@
 
 {% macro news_card(article, featured=false) %}
   <article{% if featured %} class="news-card"{% endif %}>
+    <a class="news-link" href="{{ article.external_url or ('/blog/' ~ article.slug ~ '.html') }}" aria-label="{{ article.title }}"{% if article.external_url %} target="_blank" rel="noopener noreferrer"{% endif %}>
     {% if article.image %}
     <img src="{{ article.image }}" alt="{{ article.image_alt or article.title }}" width="1200" height="800" loading="lazy" />
     {% endif %}
@@ -15,10 +16,11 @@
       <h3>{{ article.title }}</h3>
       <p>{{ article.summary }}</p>
       {% if article.external_url %}
-      <a class="text-link" href="{{ article.external_url }}" target="_blank" rel="noopener noreferrer">Leggi l’articolo originale</a>
+      <span class="text-link">Leggi l’articolo originale</span>
       {% else %}
-      <a class="text-link" href="/blog/{{ article.slug }}.html">Leggi la notizia</a>
+      <span class="text-link">Leggi la notizia</span>
       {% endif %}
     </div>
+    </a>
   </article>
 {% endmacro %}

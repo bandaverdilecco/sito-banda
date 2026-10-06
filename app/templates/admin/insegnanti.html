@@ -8,13 +8,15 @@
 {% if records %}
 <div class="panel content-list">
   {% for record in records %}
-  <article class="content-row">
+  <article class="content-row{% if not record.published %} is-unpublished{% endif %}" id="entry-{{ record.id }}">
     {% if record.image %}<img class="row-thumbnail" src="{{ record.image if record.image.startswith('/') or '://' in record.image else '/' ~ record.image }}" alt="" loading="lazy">{% endif %}
     <div class="row-content">
       <h2><a href="{{ url_for('editorial.teacher_edit', item_id=record.id) }}">{{ record.name|replace('\n', ' · ') }}</a></h2>
-      <p class="row-meta">{{ record.instrument }} · Ordine: {{ record.sort_order }}<span class="status {{ 'published' if record.published else 'draft' }}">{{ 'Pubblicato' if record.published else 'Bozza' }}</span></p>
+      <p class="row-meta">{{ record.instrument }}</p>
     </div>
     <div class="row-actions">
+      {% with first=loop.first, last=loop.last, entry_name=record.name %}{% include 'admin/_ordine.html' %}{% endwith %}
+      {% with entry_name=record.name %}{% include 'admin/_pubblicazione.html' %}{% endwith %}
       <a class="text-link" href="{{ url_for('editorial.teacher_edit', item_id=record.id) }}">Modifica<span class="sr-only"> {{ record.name }}</span></a>
       <a class="text-link danger-link" href="{{ url_for('editorial.teacher_delete', item_id=record.id) }}">Elimina<span class="sr-only"> {{ record.name }}</span></a>
     </div>

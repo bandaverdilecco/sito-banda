@@ -2,7 +2,10 @@
 {% block title %}{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}{% endblock %}
 {% block content %}
 <a class="back-link" href="{{ url_for('admin.listing', section=section) }}">← {{ section_text.label }}</a>
-<div class="page-heading"><span class="eyebrow">{{ section_text.label }}</span><h1>{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}</h1><p class="muted">I campi contrassegnati con * sono obbligatori.</p></div>
+<div class="page-heading edit-heading{% if section == 'foto' and record %} with-actions{% endif %}">
+  <div><span class="eyebrow">{{ section_text.label }}</span><h1>{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}</h1><p class="muted">I campi contrassegnati con * sono obbligatori.</p></div>
+  {% if section == 'foto' and record %}<a class="button secondary" href="{{ url_for('admin.photos', album_id=record.id) }}">Gestisci le foto →</a>{% endif %}
+</div>
 {% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
 <form method="post" enctype="multipart/form-data" class="panel edit-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -52,6 +55,7 @@
     <label for="image">Immagine</label>
     {% if values.get('image') %}<img class="image-preview" src="{{ values['image'] if values['image'].startswith('/') or '://' in values['image'] else '/' ~ values['image'] }}" alt="Immagine attuale">{% endif %}
     <input name="image" id="image" value="{{ values.get('image', '') }}" placeholder="https://… oppure /assets/…">
+    <p class="help">Link HTTPS (anche Google Drive) o percorso locale /assets/… o /uploads/….</p>
     <label class="upload-label" for="image_upload">Oppure carica un’immagine</label>
     <input type="file" name="image_upload" id="image_upload" accept="image/jpeg,image/png,image/webp,image/gif">
     <p class="help">Il file caricato sostituisce il collegamento. Formati: JPG, PNG, WebP o GIF.</p>
@@ -62,8 +66,9 @@
   </div>
   {% elif section == 'foto' %}
   <div class="field">
-    <label for="date">Mese e anno <span aria-hidden="true">*</span></label>
-    <input name="date" id="date" type="month" value="{{ values.get('date', '') }}" required>
+    <label for="date">Date dell’album <span aria-hidden="true">*</span></label>
+    <input name="date" id="date" type="text" value="{{ values.get('date', '') }}" required aria-describedby="date-help" placeholder="2026-10-06, 2026-10-07">
+    <p class="help" id="date-help">AAAA-MM-GG oppure AAAA-MM. Separa più date con virgole; la prima in ordine cronologico determina la posizione nell’archivio.</p>
   </div>
   <div class="field">
     <label for="description">Descrizione / crediti</label>
@@ -78,6 +83,7 @@
     <label for="cover">Copertina</label>
     {% if values.get('cover') %}<img class="image-preview" src="{{ values['cover'] if values['cover'].startswith('/') or '://' in values['cover'] else '/' ~ values['cover'] }}" alt="Immagine attuale">{% endif %}
     <input name="cover" id="cover" value="{{ values.get('cover', '') }}" placeholder="https://… oppure /assets/…">
+    <p class="help">Link HTTPS (anche Google Drive) o percorso locale /assets/… o /uploads/….</p>
     <label class="upload-label" for="cover_upload">Oppure carica un’immagine</label>
     <input type="file" name="cover_upload" id="cover_upload" accept="image/jpeg,image/png,image/webp,image/gif">
     <p class="help">Il file caricato sostituisce il collegamento. Formati: JPG, PNG, WebP o GIF.</p>
@@ -92,11 +98,6 @@
     <p class="help" id="cover_position-help">Posizione orizzontale e verticale: 50% 50% al centro, 50% 0% in alto; vuoto = centro.</p>
   </div>
   {% endif %}
-  <div class="field checkbox-field">
-    <label for="published"><input type="checkbox" name="published" id="published" value="1" {% if values.get('published') %}checked{% endif %}> Pubblicato sul sito</label>
-    <p class="help">Se disattivato, il contenuto rimane in bozza e non appare sul sito.</p>
-  </div>
   <div class="form-actions"><button class="button" type="submit">Salva {{ 'modifiche' if record else 'contenuto' }}</button><a class="button secondary" href="{{ url_for('admin.listing', section=section) }}">Annulla</a></div>
 </form>
-{% if section == 'foto' and record %}<div class="panel next-step"><div><h2>Le foto di questo album</h2><p>Aggiungi immagini, modifica le descrizioni o sincronizza la cartella Google Drive.</p></div><a class="button secondary" href="{{ url_for('admin.photos', album_id=record.id) }}">Gestisci le foto →</a></div>{% endif %}
 {% endblock %}

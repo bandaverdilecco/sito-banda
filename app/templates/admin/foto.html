@@ -13,7 +13,23 @@
     {% if photos %}
     <div class="photo-grid">
       {% for photo in photos %}
-      <article class="photo-card"><img src="{{ photo.thumbnail if photo.thumbnail.startswith('/') or '://' in photo.thumbnail else '/' ~ photo.thumbnail }}" alt="{{ photo.alt }}" loading="lazy"><div class="photo-card-body"><p>{{ photo.alt or 'Senza descrizione' }}</p><span class="help">Ordine {{ photo.sort_order }}</span><div class="row-actions"><a href="{{ url_for('admin.edit_photo', album_id=album.id, photo_id=photo.id) }}">Modifica</a><a class="danger-link" href="{{ url_for('admin.delete_photo', album_id=album.id, photo_id=photo.id) }}">Elimina<span class="sr-only"> foto {{ loop.index }}</span></a></div></div></article>
+      <article class="photo-card{% if not photo.published %} is-hidden{% endif %}" id="photo-{{ photo.id }}">
+        {% set preview = photo.thumbnail or photo.src %}
+        <img src="{{ preview if preview.startswith('/') or '://' in preview else '/' ~ preview }}" alt="{{ photo.alt }}" loading="lazy">
+        <div class="photo-card-body">
+          <p>{{ photo.alt or 'Senza descrizione' }}</p>
+          <form method="post" action="{{ url_for('admin.photo_visibility', album_id=album.id, photo_id=photo.id) }}" class="photo-visibility" data-photo-visibility>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row-actions">
+              <a href="{{ url_for('admin.edit_photo', album_id=album.id, photo_id=photo.id) }}">Modifica</a>
+              <a class="danger-link" href="{{ url_for('admin.delete_photo', album_id=album.id, photo_id=photo.id) }}">Elimina<span class="sr-only"> foto {{ loop.index }}</span></a>
+              <label for="hidden-{{ photo.id }}"><input type="checkbox" id="hidden-{{ photo.id }}" name="hidden" value="1" {% if not photo.published %}checked{% endif %}> Nascondi<span class="sr-only"> foto {{ loop.index }}: {{ photo.alt }}</span></label>
+            </div>
+            <button type="submit" class="button small secondary">Salva visibilità</button>
+            <span class="help" role="alert" data-visibility-error hidden>Salvataggio non riuscito. Riprova.</span>
+          </form>
+        </div>
+      </article>
       {% endfor %}
     </div>
     {% else %}<div class="panel empty-state"><h3>L’album è pronto per le prime foto.</h3><p>Aggiungi un’immagine con il modulo{% if album.folder %} o sincronizza la cartella Google Drive{% endif %}.</p></div>{% endif %}

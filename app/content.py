@@ -73,8 +73,8 @@ def folder_url(value):
     return value
 
 
-def valid_date(value, month_only=False, allow_month=False):
-    pattern = r'\d{4}-\d{2}' if month_only else r'\d{4}-\d{2}(?:-\d{2})?' if allow_month else r'\d{4}-\d{2}-\d{2}'
+def valid_date(value, allow_month=False):
+    pattern = r'\d{4}-\d{2}(?:-\d{2})?' if allow_month else r'\d{4}-\d{2}-\d{2}'
     try:
         if not re.fullmatch(pattern, value):
             raise ValueError()
@@ -84,14 +84,17 @@ def valid_date(value, month_only=False, allow_month=False):
     return value
 
 
-def order(value):
+def album_dates(value):
+    dates = [part.strip() for part in value.split(',')]
     try:
-        result = int(value or 0)
-        if abs(result) > 1_000_000:
-            raise ValueError()
-        return result
+        for item in dates:
+            valid_date(item, allow_month=True)
     except ValueError as exc:
-        raise ValueError('order_invalid') from exc
+        raise ValueError('album_dates_invalid') from exc
+    result = ', '.join(sorted(set(dates)))
+    if len(result) > 2000:
+        raise ValueError({'code': 'field_too_long', 'field': 'date', 'maximum': 2000})
+    return result
 
 
 def validate_content(section, form, files, existing=None):
@@ -100,7 +103,7 @@ def validate_content(section, form, files, existing=None):
     for name in spec['fields']:
         value = form.get(name, '').strip()
         if name == 'published':
-            data[name] = int(value in ('on', '1', 'true', 'yes'))
+            # Publication is managed separately from content edits.
             continue
         if name in spec['required'] and not value:
             raise ValueError('required_fields')
@@ -111,9 +114,10 @@ def validate_content(section, form, files, existing=None):
     if 'slug' in data and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', data['slug']):
         raise ValueError('slug_invalid')
     if 'date' in data:
-        valid_date(data['date'], month_only=section == 'foto', allow_month=section in {'eventi', 'notizie'})
-    if 'sort_order' in data:
-        data['sort_order'] = order(data['sort_order'])
+        if section == 'foto':
+            data['date'] = album_dates(data['date'])
+        else:
+            valid_date(data['date'], allow_month=True)
     if 'body' in data:
         data['body'] = clean_body(data['body'])
         data['external_url'] = https_url(data['external_url'])
@@ -166,7 +170,7 @@ def save_photo(album_id, form, files, id=None):
     alt = form.get('alt', '').strip()
     if len(alt) > 2000:
         raise ValueError('description_too_long')
-    position = order(form.get('sort_order', '0'))
+    published = int(form.get('hidden', '') not in ('on', '1', 'true', 'yes'))
     file = files.get('image_upload')
     src = store_image(file) if file and file.filename else image_url(form.get('src', existing['src'] if existing else ''))
     if not src:
@@ -177,12 +181,14 @@ def save_photo(album_id, form, files, id=None):
     source = existing['source'] if same else 'upload' if src.startswith('/uploads/') else 'link'
     try:
         with db:
+            db.execute('BEGIN IMMEDIATE')
             if existing:
-                db.execute('UPDATE photos SET src=?, thumbnail=?, original=?, alt=?, sort_order=?, source=? WHERE id=? AND album_id=?',
-                           (src, thumbnail, original, alt, position, source, id, album_id))
+                db.execute('UPDATE photos SET src=?, thumbnail=?, original=?, alt=?, source=?, published=? WHERE id=? AND album_id=?',
+                           (src, thumbnail, original, alt, source, published, id, album_id))
                 return id
-            return db.execute('INSERT INTO photos(album_id,src,thumbnail,original,alt,sort_order,source) VALUES(?,?,?,?,?,?,?)',
-                              (album_id, src, thumbnail, original, alt, position, source)).lastrowid
+            position = db.execute('SELECT coalesce(max(sort_order),-1)+1 FROM photos WHERE album_id=?', (album_id,)).fetchone()[0]
+            return db.execute('INSERT INTO photos(album_id,src,thumbnail,original,alt,sort_order,source,published) VALUES(?,?,?,?,?,?,?,?)',
+                              (album_id, src, thumbnail, original, alt, position, source, published)).lastrowid
     except sqlite3.IntegrityError as exc:
         raise ValueError('photo_duplicate') from exc
 

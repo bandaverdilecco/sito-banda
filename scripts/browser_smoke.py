@@ -5,6 +5,7 @@ Uses installed Chromium, or Playwright's Chromium when BROWSER_PATH is supplied.
 """
 import io
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -73,7 +74,13 @@ def run():
                 page.get_by_label('Data', exact=False).fill('2026-12-20')
                 page.get_by_label('Luogo', exact=False).fill('Lecco')
                 page.get_by_role('button', name='Salva contenuto').click()
-                expect(page.locator('.content-row').filter(has_text='Evento prova browser')).to_have_count(1)
+                expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/eventi/\d+/edit$'))
+                expect(page.get_by_label('Titolo', exact=False)).to_have_value('Evento prova browser')
+                saved_event_url = page.url
+                page.get_by_role('button', name='Salva modifiche').click()
+                expect(page).to_have_url(saved_event_url)
+                page.reload()
+                expect(page).to_have_url(saved_event_url)
                 page.goto(origin + '/prossimi-eventi.html')
                 expect(page.locator('main')).to_contain_text('Evento prova browser')
 
@@ -82,11 +89,16 @@ def run():
                 page.get_by_label('Indirizzo breve').fill('notizia-prova-browser')
                 page.get_by_label('Data', exact=False).fill('2026-10-06')
                 page.get_by_label('Sommario').fill('Una notizia scritta dal browser.')
+                page.locator('[name="image"]').fill('/assets/concert.jpg')
                 page.locator('.editor-content').fill('Testo dal nuovo editor visuale.')
                 page.get_by_role('button', name='Salva contenuto').click()
-                expect(page).to_have_url(origin + '/admin/notizie')
+                expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/notizie/\d+/edit$'))
                 page.goto(origin + '/blog/notizia-prova-browser.html')
                 expect(page.locator('article')).to_contain_text('Testo dal nuovo editor visuale.')
+                for selector in ('img', 'h3', '.news-card-copy p'):
+                    page.goto(origin + '/blog.html')
+                    page.locator('a.news-link[href="/blog/notizia-prova-browser.html"]').locator(selector).click()
+                    expect(page).to_have_url(origin + '/blog/notizia-prova-browser.html')
 
                 page.goto(origin + '/admin/notizie/new')
                 page.get_by_label('Titolo', exact=False).fill('Notizia archivio browser')
@@ -114,9 +126,30 @@ def run():
                 page.get_by_label('Descrizione', exact=False).fill('Una nuova scheda gestita dal browser.')
                 page.locator('[name="url"]').fill('/contatti.html')
                 page.get_by_label('Testo del collegamento', exact=False).fill('Contattaci')
-                page.get_by_label('Ordine', exact=True).fill('-1')
                 page.get_by_role('button', name='Salva scheda').click()
-                expect(page.locator('.content-row').filter(has_text='Scheda prova browser')).to_have_count(1)
+                expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/musica-insieme/\d+/edit$'))
+                expect(page.locator('[name="title"]')).to_have_value('Scheda prova browser')
+                page.goto(origin + '/admin/musica-insieme')
+                move_up = page.get_by_role('button', name='Sposta su: Scheda prova browser', exact=True)
+                page.evaluate('window.orderPageMarker = true')
+                while move_up.is_enabled():
+                    move_up.click()
+                    expect(page.locator('.content-list')).to_have_attribute('aria-busy', 'false')
+                    assert page.evaluate('window.orderPageMarker === true'), 'Ordering reloaded the page'
+                expect(page.locator('.content-row').first).to_contain_text('Scheda prova browser')
+                move_down = page.get_by_role('button', name='Sposta giù: Scheda prova browser', exact=True)
+                page.route('**/move', lambda route: route.abort())
+                move_down.click()
+                expect(page.locator('[data-order-error]:visible')).to_have_count(1)
+                expect(move_down).to_be_enabled()
+                expect(page.locator('.content-row').first).to_contain_text('Scheda prova browser')
+                page.unroute('**/move')
+                move_down.click()
+                expect(page.locator('.content-list')).to_have_attribute('aria-busy', 'false')
+                expect(page.locator('.content-row').nth(1)).to_contain_text('Scheda prova browser')
+                move_up.click()
+                expect(page.locator('.content-list')).to_have_attribute('aria-busy', 'false')
+                expect(page.locator('[data-order-error]:visible')).to_have_count(0)
                 page.goto(origin)
                 expect(page.get_by_role('heading', name='Musica insieme, dalla home')).to_be_visible()
                 expect(page.locator('.feature-card').first).to_contain_text('Scheda prova browser')
@@ -125,8 +158,10 @@ def run():
                 page.goto(origin + '/admin/foto/new')
                 page.get_by_label('Titolo', exact=False).fill('Album prova browser')
                 page.get_by_label('Indirizzo breve').fill('album-prova-browser')
-                page.get_by_label('Mese e anno').fill('2026-10')
+                page.get_by_label('Date dell’album').fill('2026-10-06, 2026-10-07')
                 page.get_by_role('button', name='Salva contenuto').click()
+                expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/foto/\d+/edit$'))
+                page.get_by_role('link', name='Gestisci le foto').click()
                 photo_page = page.url
                 image = io.BytesIO()
                 Image.new('RGB', (80, 60), '#762038').save(image, 'JPEG')
@@ -134,7 +169,46 @@ def run():
                 page.get_by_label('Descrizione dell’immagine', exact=True).fill('Fotografia caricata dal browser')
                 page.get_by_role('button', name='Aggiungi foto').click()
                 expect(page.locator('.photo-card')).to_have_count(1)
+                photo_card = page.locator('.photo-card').first
+                inline_visibility = photo_card.get_by_role('checkbox', name='Nascondi', exact=False)
+                expect(photo_card.locator('.row-actions input[type="checkbox"]')).to_have_count(1)
+                expect(photo_card.get_by_text('Nascosta', exact=True)).to_have_count(0)
+                expect(photo_card.get_by_role('button', name='Salva visibilità')).not_to_be_visible()
+                edit_box = photo_card.get_by_role('link', name='Modifica', exact=True).bounding_box()
+                checkbox_box = inline_visibility.bounding_box()
+                assert abs((edit_box['y'] + edit_box['height'] / 2) - (checkbox_box['y'] + checkbox_box['height'] / 2)) < 3
+                inline_visibility.check()
+                expect(inline_visibility).to_be_enabled()
+                expect(photo_card.get_by_text('Salvato.', exact=True)).to_have_count(0)
+                expect(photo_card).to_have_class(re.compile(r'is-hidden'))
+                expect(photo_card.locator('img')).to_have_css('opacity', '0.35')
+                expect(photo_card.get_by_text('Nascosta', exact=True)).to_have_count(0)
+                expect(page).to_have_url(photo_page)
+                page.reload()
+                expect(inline_visibility).to_be_checked()
+                inline_visibility.uncheck()
+                expect(inline_visibility).to_be_enabled()
+                expect(photo_card.locator('img')).to_have_css('opacity', '1')
+                page.route('**/visibility', lambda route: route.abort())
+                inline_visibility.check()
+                expect(photo_card.locator('[data-visibility-error]')).to_be_visible()
+                expect(inline_visibility).not_to_be_checked()
+                expect(photo_card.locator('img')).to_have_css('opacity', '1')
+                page.unroute('**/visibility')
+                page.get_by_role('link', name='Modifica', exact=True).click()
+                photo_edit_url = page.url
+                page.get_by_label('Nascondi questa foto', exact=True).check()
+                page.get_by_role('button', name='Salva modifiche').click()
+                expect(page).to_have_url(photo_edit_url)
+                expect(page.get_by_label('Nascondi questa foto', exact=True)).to_be_checked()
                 page.goto(origin + '/foto/album-prova-browser.html')
+                expect(page.locator('.gallery-photo')).to_have_count(0)
+                expect(page.locator('.gallery-empty')).to_be_visible()
+                page.goto(photo_edit_url)
+                page.get_by_label('Nascondi questa foto', exact=True).uncheck()
+                page.get_by_role('button', name='Salva modifiche').click()
+                page.goto(origin + '/foto/album-prova-browser.html')
+                expect(page.locator('.gallery-hero .eyebrow')).to_have_text('6 - 7 ottobre 2026')
                 expect(page.locator('.gallery-photo img')).to_be_visible()
                 page.locator('.gallery-photo').click()
                 expect(page.locator('dialog')).to_be_visible()
@@ -147,14 +221,53 @@ def run():
                 page.get_by_label('Oppure carica una fotografia', exact=True).set_input_files(
                     dict(name='insegnante.jpg', mimeType='image/jpeg', buffer=image.getvalue()))
                 page.get_by_label('Descrizione della fotografia', exact=True).fill('La nostra nuova insegnante')
-                page.get_by_label('Ordine', exact=True).fill('-1')
                 page.get_by_role('button', name='Salva insegnante').click()
-                expect(page.locator('.content-row').filter(has_text='Maestra browser Uno')).to_have_count(1)
+                expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/insegnanti/\d+/edit$'))
+                expect(page.get_by_label('Nome', exact=False)).to_have_value('Maestra browser Uno\nMaestro browser Due')
+                page.goto(origin + '/admin/insegnanti')
+                move_up = page.get_by_role('button', name=re.compile('Sposta su: Maestra browser Uno'))
+                page.evaluate('window.orderPageMarker = true')
+                while move_up.is_enabled():
+                    move_up.click()
+                    expect(page.locator('.content-list')).to_have_attribute('aria-busy', 'false')
+                    assert page.evaluate('window.orderPageMarker === true'), 'Ordering reloaded the page'
+                expect(page.locator('.content-row').first).to_contain_text('Maestra browser Uno')
                 page.goto(origin + '/scuola-allievi.html')
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestra browser Uno')
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestro browser Due')
                 expect(page.locator('.teacher-entry').first.locator('h3 br')).to_have_count(1)
                 expect(page.locator('.teacher-entry').first.locator('img')).to_be_visible()
+
+                for section in ('eventi', 'notizie', 'foto', 'musica-insieme', 'insegnanti'):
+                    page.goto(origin + '/admin/' + section)
+                    row = page.locator('.content-row').first
+                    publication = row.locator('[data-publication]')
+                    checkbox = publication.get_by_role('checkbox', name=re.compile('^Nascosto'))
+                    control_box = publication.bounding_box()
+                    edit_box = row.get_by_role('link', name=re.compile('^Modifica')).bounding_box()
+                    assert control_box['x'] + control_box['width'] <= edit_box['x']
+                    assert abs((control_box['y'] + control_box['height'] / 2) - (edit_box['y'] + edit_box['height'] / 2)) < 3
+                    expect(checkbox).not_to_be_checked()
+                    page.evaluate('window.publicationPageMarker = true')
+                    checkbox.check()
+                    expect(checkbox).to_be_enabled()
+                    expect(row).to_have_css('opacity', '0.4')
+                    expect(publication.locator('[data-publication-error]')).not_to_be_visible()
+                    assert page.evaluate('window.publicationPageMarker === true')
+                    page.reload()
+                    expect(checkbox).to_be_checked()
+                    expect(row).to_have_css('opacity', '0.4')
+                    checkbox.uncheck()
+                    expect(checkbox).to_be_enabled()
+                    expect(row).to_have_css('opacity', '1')
+                    page.route('**/publication', lambda route: route.abort())
+                    checkbox.check()
+                    expect(publication.locator('[data-publication-error]')).to_be_visible()
+                    expect(checkbox).not_to_be_checked()
+                    expect(row).to_have_css('opacity', '1')
+                    page.unroute('**/publication')
+                    page.reload()
+                    expect(checkbox).not_to_be_checked()
 
                 for width in (1440, 390, 320):
                     page.set_viewport_size({'width': width, 'height': 900})
@@ -193,6 +306,9 @@ def run():
                              '/admin/insegnanti', '/admin/insegnanti/new', photo_page.removeprefix(origin)):
                     page.goto(origin + path, wait_until='domcontentloaded')
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'Horizontal overflow: {path}'
+                    if path == photo_page.removeprefix(origin):
+                        actions = page.locator('.photo-card .row-actions').first
+                        assert actions.evaluate('(element) => element.scrollWidth <= element.clientWidth'), 'Photo actions clipped on mobile'
                     if path == '/admin':
                         expect(page.locator('.dashboard-card')).to_have_count(6)
                         page.screenshot(path=output / 'admin-mobile.png', full_page=True)

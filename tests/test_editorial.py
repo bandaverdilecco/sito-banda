@@ -56,8 +56,8 @@ class EditorialTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.get_data(as_text=True)[:500])
         return self.soup(response).select_one('input[name="csrf_token"]')["value"]
 
-    def submit(self, path, data=None, *, expected=302):
-        response = self.client.post(path, data={**(data or {}), "csrf_token": self.csrf(path)})
+    def submit(self, path, data=None, *, expected=302, token_page=None):
+        response = self.client.post(path, data={**(data or {}), "csrf_token": self.csrf(token_page or path)})
         self.assertEqual(response.status_code, expected, response.get_data(as_text=True)[:1500])
         return response
 
@@ -68,6 +68,74 @@ class EditorialTests(unittest.TestCase):
         page = self.soup(self.client.get("/"))
         return ([row.h3.get_text() for row in page.select(".event-row")],
                 [card.h3.get_text() for card in page.select(".news-card")])
+
+    def test_list_arrows_reorder_ties_and_preserve_positions_when_editing(self):
+        self.login()
+        for section, table, data, public, selector, field in (
+            ('musica-insieme', 'home_features', self.feature_data(), '/', '.feature-card h3', 'title'),
+            ('insegnanti', 'teachers', self.teacher_data(), '/scuola-allievi.html', '.teacher-entry h3', 'name'),
+        ):
+            with self.subTest(section=section):
+                listing = f'/admin/{section}'
+                with self.app.app_context():
+                    db = get_db()
+                    db.execute(f'UPDATE {table} SET sort_order=7')
+                    db.commit()
+                original = self.rows(f'SELECT * FROM {table} ORDER BY sort_order,id')
+                ids = [row['id'] for row in original]
+                token = self.csrf(listing)
+
+                def move(item_id, direction, status=302):
+                    response = self.client.post(f'{listing}/{item_id}/move',
+                        data={'csrf_token': token, 'direction': direction})
+                    self.assertEqual(response.status_code, status)
+                    if status == 302:
+                        self.assertEqual(response.location, f'{listing}#entry-{item_id}')
+
+                move(ids[1], 'up')
+                ids[0], ids[1] = ids[1], ids[0]
+                self.assertEqual([r['id'] for r in self.rows(f'SELECT * FROM {table} ORDER BY sort_order,id')], ids)
+                names = {r['id']: r[field].replace('\n', '') for r in original}
+                self.assertEqual([tag.get_text() for tag in self.soup(self.client.get(public)).select(selector)],
+                                 [names[item_id] for item_id in ids])
+                move(ids[0], 'up')  # Boundaries are harmless no-ops.
+                move(ids[-1], 'down')
+                self.assertEqual([r['id'] for r in self.rows(f'SELECT * FROM {table} ORDER BY sort_order,id')], ids)
+                move(ids[0], 'down')
+                self.assertEqual([r['id'] for r in self.rows(f'SELECT * FROM {table} ORDER BY sort_order,id')],
+                                 [r['id'] for r in original])
+                move(ids[0], 'sideways', 400)
+                move(999999, 'up', 404)
+                self.assertEqual(self.client.post(f'{listing}/{ids[0]}/move', data={'direction': 'up'}).status_code, 400)
+                page = self.soup(self.client.get(listing))
+                self.assertTrue(page.select_one('.content-row:first-child button[value="up"]').has_attr('disabled'))
+                self.assertTrue(page.select_one('.content-row:last-child button[value="down"]').has_attr('disabled'))
+                self.submit(listing + '/new', dict(data, sort_order='-999'))
+                created = self.rows(f'SELECT * FROM {table} ORDER BY sort_order,id')[-1]
+                self.assertEqual(created[field], data[field])
+                self.submit(f'{listing}/{created["id"]}/edit', dict(data, sort_order='-1000'))
+                self.assertEqual(self.rows(f'SELECT sort_order FROM {table} WHERE id=?', (created['id'],))[0]['sort_order'], created['sort_order'])
+                self.assertIsNone(self.soup(self.client.get(listing + '/new')).select_one('[name="sort_order"]'))
+
+    def test_list_arrows_require_login(self):
+        token = self.csrf()
+        for section in ('musica-insieme', 'insegnanti'):
+            response = self.client.post(f'/admin/{section}/1/move', data={'csrf_token': token, 'direction': 'up'})
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/admin', response.location)
+
+    def test_list_arrows_return_saved_order_for_async_requests(self):
+        self.login()
+        for section, table in (('musica-insieme', 'home_features'), ('insegnanti', 'teachers')):
+            listing = f'/admin/{section}'
+            ids = [row['id'] for row in self.rows(f'SELECT id FROM {table} ORDER BY sort_order,id')]
+            response = self.client.post(f'{listing}/{ids[1]}/move',
+                data={'csrf_token': self.csrf(listing), 'direction': 'up'},
+                headers={'Accept': 'application/json'})
+            ids[0], ids[1] = ids[1], ids[0]
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json(), {'ids': ids})
+            self.assertEqual([row['id'] for row in self.rows(f'SELECT id FROM {table} ORDER BY sort_order,id')], ids)
 
     @staticmethod
     def feature_data():
@@ -202,21 +270,25 @@ class EditorialTests(unittest.TestCase):
     def test_home_cards_create_reorder_publish_edit_and_delete(self):
         self.login()
         values = self.feature_data()
-        self.submit("/admin/musica-insieme/new", values)
+        response = self.submit("/admin/musica-insieme/new", values)
         record = self.rows("SELECT * FROM home_features WHERE title=?", (values["title"],))[0]
         path = f"/admin/musica-insieme/{record['id']}"
+        self.assertEqual(response.location, path + '/edit')
         page = self.soup(self.client.get("/"))
-        card = page.select_one(".feature-card")
+        card = page.select(".feature-card")[-1]
         self.assertEqual(card.h3.get_text(), values["title"])
         self.assertEqual(card["href"], values["url"])
         self.assertEqual(card.select_one(".text-link").get_text(), values["link_label"])
         values.update(title="Musica per tutti aggiornata", sort_order="99", url="https://example.com/musica")
-        self.submit(path + "/edit", values)
+        response = self.submit(path + "/edit", values)
+        self.assertEqual(response.location, path + '/edit')
         self.assertEqual(self.soup(self.client.get("/")).select(".feature-card")[-1].h3.get_text(), values["title"])
         values.pop("published")
+        self.submit(path + '/publication', {'hidden': '1'}, token_page='/admin/musica-insieme')
         self.submit(path + "/edit", values)
         self.assertNotIn(values["title"], self.client.get("/").get_data(as_text=True))
         values["published"] = "1"
+        self.submit(path + '/publication', token_page='/admin/musica-insieme')
         self.submit(path + "/edit", values)
         self.assertIn(values["title"], self.client.get("/").get_data(as_text=True))
         self.assertEqual(self.client.get(path + "/delete").status_code, 200)
@@ -230,21 +302,25 @@ class EditorialTests(unittest.TestCase):
         self.login()
         values = self.teacher_data()
         values["name"] = "Maestra Uno\nMaestro Due"
-        self.submit("/admin/insegnanti/new", values)
+        response = self.submit("/admin/insegnanti/new", values)
         record = self.rows("SELECT * FROM teachers WHERE name=?", (values["name"],))[0]
         path = f"/admin/insegnanti/{record['id']}"
-        card = self.soup(self.client.get("/scuola-allievi.html")).select_one(".teacher-entry")
+        self.assertEqual(response.location, path + '/edit')
+        card = self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1]
         self.assertEqual(card.h3.get_text(" ", strip=True), "Maestra Uno Maestro Due")
         self.assertEqual(len(card.h3.select("br")), 1)
         self.assertEqual(card.select_one(".eyebrow").get_text(), "Violino")
         self.assertEqual(card.img["src"], values["image"])
         values.update(name="Maestra aggiornata", instrument="Pianoforte", sort_order="99")
-        self.submit(path + "/edit", values)
+        response = self.submit(path + "/edit", values)
+        self.assertEqual(response.location, path + '/edit')
         self.assertEqual(self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1].h3.get_text(), values["name"])
         values.pop("published")
+        self.submit(path + '/publication', {'hidden': '1'}, token_page='/admin/insegnanti')
         self.submit(path + "/edit", values)
         self.assertNotIn(values["name"], self.client.get("/scuola-allievi.html").get_data(as_text=True))
         values["published"] = "1"
+        self.submit(path + '/publication', token_page='/admin/insegnanti')
         self.submit(path + "/edit", values)
         self.assertIn(values["name"], self.client.get("/scuola-allievi.html").get_data(as_text=True))
         self.assertEqual(self.client.get(path + "/delete").status_code, 200)
@@ -259,11 +335,11 @@ class EditorialTests(unittest.TestCase):
         for section, table, values, invalid in (
             ("musica-insieme", "home_features", self.feature_data(), [
                 {"title": ""}, {"description": ""}, {"url": "//example.com/link"},
-                {"url": "not-a-link"}, {"sort_order": "first"}, {"sort_order": "1000001"},
+                {"url": "not-a-link"},
             ]),
             ("insegnanti", "teachers", self.teacher_data(), [
                 {"name": ""}, {"instrument": ""}, {"image": "http://example.com/photo.jpg"},
-                {"image": "relative-photo.jpg"}, {"sort_order": "first"}, {"sort_order": "-1000001"},
+                {"image": "relative-photo.jpg"},
             ]),
         ):
             before = self.rows(f"SELECT * FROM {table}")
@@ -274,14 +350,14 @@ class EditorialTests(unittest.TestCase):
         feature = self.feature_data()
         feature.update(title="<strong>Titolo</strong>", description="<em>Testo</em>")
         self.submit("/admin/musica-insieme/new", feature)
-        card = self.soup(self.client.get("/")).select_one(".feature-card")
+        card = self.soup(self.client.get("/")).select(".feature-card")[-1]
         self.assertEqual(card.h3.get_text(), feature["title"])
         self.assertEqual(card.p.get_text(), feature["description"])
         self.assertIsNone(card.select_one("strong, em"))
         teacher = self.teacher_data()
         teacher.update(name="<strong>Maestra</strong>", image_alt='La maestra "in concerto"')
         self.submit("/admin/insegnanti/new", teacher)
-        card = self.soup(self.client.get("/scuola-allievi.html")).select_one(".teacher-entry")
+        card = self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1]
         self.assertEqual(card.h3.get_text(), teacher["name"])
         self.assertIsNone(card.h3.strong)
         self.assertEqual(card.img["alt"], teacher["image_alt"])

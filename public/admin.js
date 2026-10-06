@@ -139,6 +139,111 @@ document.querySelectorAll("textarea[data-richtext]").forEach((textarea) => {
   });
 });
 
+document.querySelectorAll("form[data-photo-visibility]").forEach((form) => {
+  const checkbox = form.querySelector('input[name="hidden"]');
+  const card = form.closest('.photo-card');
+  const error = form.querySelector('[data-visibility-error]');
+  let lastSaved = checkbox.checked;
+  form.querySelector('button[type="submit"]').hidden = true;
+  checkbox.addEventListener('change', () => form.requestSubmit());
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const body = new FormData(form);
+    checkbox.disabled = true;
+    error.hidden = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', body, headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!response.ok || response.redirected) throw new Error('save_failed');
+      const result = await response.json();
+      if (typeof result.published !== 'boolean') throw new Error('invalid_response');
+      lastSaved = checkbox.checked = !result.published;
+      card.classList.toggle('is-hidden', lastSaved);
+    } catch {
+      checkbox.checked = lastSaved;
+      error.hidden = false;
+    } finally {
+      checkbox.disabled = false;
+    }
+  });
+});
+
+document.querySelectorAll('form[data-publication]').forEach((form) => {
+  const checkbox = form.querySelector('input[name="hidden"]');
+  const error = form.querySelector('[data-publication-error]');
+  let lastSaved = checkbox.checked;
+  form.querySelector('button[type="submit"]').hidden = true;
+  checkbox.addEventListener('change', () => form.requestSubmit());
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const body = new FormData(form);
+    checkbox.disabled = true;
+    error.hidden = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', body, headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!response.ok || response.redirected) throw new Error('save_failed');
+      const result = await response.json();
+      if (typeof result.published !== 'boolean') throw new Error('invalid_response');
+      lastSaved = checkbox.checked = !result.published;
+      form.closest('.content-row').classList.toggle('is-unpublished', lastSaved);
+    } catch {
+      checkbox.checked = lastSaved;
+      error.hidden = false;
+    } finally {
+      checkbox.disabled = false;
+    }
+  });
+});
+
+document.querySelectorAll('.content-list').forEach((list) => {
+  const forms = [...list.querySelectorAll('form.order-actions')];
+  if (!forms.length) return;
+  let busy = false;
+  forms.forEach((form) => form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = event.submitter;
+    if (busy || !button || button.disabled) return;
+    busy = true;
+    const body = new FormData(form);
+    body.set('direction', button.value);
+    list.setAttribute('aria-busy', 'true');
+    forms.forEach((item) => {
+      item.querySelector('[data-order-error]').hidden = true;
+      item.querySelectorAll('button').forEach((control) => { control.disabled = true; });
+    });
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', body, headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!response.ok || response.redirected) throw new Error('save_failed');
+      const result = await response.json();
+      const rows = new Map([...list.children].map((row) => [row.id, row]));
+      if (!Array.isArray(result.ids) || result.ids.length !== rows.size ||
+          new Set(result.ids).size !== rows.size ||
+          result.ids.some((id) => !rows.has(`entry-${id}`))) throw new Error('stale_list');
+      result.ids.forEach((id) => list.append(rows.get(`entry-${id}`)));
+    } catch {
+      form.querySelector('[data-order-error]').hidden = false;
+    } finally {
+      [...list.children].forEach((row, index) => {
+        row.querySelector('button[value="up"]').disabled = index === 0;
+        row.querySelector('button[value="down"]').disabled = index === list.children.length - 1;
+      });
+      list.setAttribute('aria-busy', 'false');
+      busy = false;
+      const focusTarget = button.disabled
+        ? form.querySelector('button:not(:disabled)') : button;
+      if (focusTarget) focusTarget.focus({ preventScroll: true });
+    }
+  }));
+});
+
 document.querySelectorAll("button[data-pending-label]").forEach((button) => {
   button.form.addEventListener("submit", () => {
     button.disabled = true;

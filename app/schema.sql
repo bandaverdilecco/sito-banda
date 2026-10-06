@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS photos (
   id INTEGER PRIMARY KEY, album_id INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
   src TEXT NOT NULL, thumbnail TEXT NOT NULL DEFAULT '', original TEXT NOT NULL DEFAULT '',
   alt TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0,
-  source TEXT NOT NULL DEFAULT 'upload', UNIQUE(album_id, src)
+  source TEXT NOT NULL DEFAULT 'upload',
+  published INTEGER NOT NULL DEFAULT 1 CHECK(published IN (0,1)), UNIQUE(album_id, src)
 );
 CREATE INDEX IF NOT EXISTS photos_album ON photos(album_id, sort_order);
 CREATE INDEX IF NOT EXISTS events_date ON events(published, date);
