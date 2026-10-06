@@ -1,4 +1,4 @@
-dist/
-node_modules/
-.wrangler/
-.cache/
+.venv/
+instance/
+__pycache__/
+*.pyc

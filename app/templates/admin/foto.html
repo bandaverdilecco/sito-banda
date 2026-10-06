@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}Foto · {{ album.title }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('admin.listing', section='foto') }}">← Album fotografici</a>
+<div class="page-heading with-actions"><div><span class="eyebrow">Foto dell’album</span><h1>{{ album.title }}</h1><p class="muted">{{ photos|length }} foto · {{ 'Album pubblicato' if album.published else 'Album in bozza' }}</p></div><a class="button secondary" href="{{ url_for('admin.edit', section='foto', item_id=album.id) }}">Modifica album</a></div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+{% if album.folder %}
+<div class="panel sync-panel"><div><h2>Sincronizza da Google Drive</h2><p>Importa le immagini dalla cartella condivisa pubblicamente e conserva i caricamenti manuali. Le foto rimosse dalla cartella verranno tolte dall’album; quelle eliminate solo dal pannello possono ricomparire.</p></div><form method="post" action="{{ url_for('admin.sync_photos', album_id=album.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary" type="submit" data-pending-label="Sincronizzazione…">Sincronizza foto</button></form></div>
+{% endif %}
+<div class="photos-layout">
+  <section aria-labelledby="photos-title">
+    <h2 class="section-title" id="photos-title">Le fotografie</h2>
+    {% if photos %}
+    <div class="photo-grid">
+      {% for photo in photos %}
+      <article class="photo-card"><img src="{{ photo.thumbnail if photo.thumbnail.startswith('/') or '://' in photo.thumbnail else '/' ~ photo.thumbnail }}" alt="{{ photo.alt }}" loading="lazy"><div class="photo-card-body"><p>{{ photo.alt or 'Senza descrizione' }}</p><span class="help">Ordine {{ photo.sort_order }}</span><div class="row-actions"><a href="{{ url_for('admin.edit_photo', album_id=album.id, photo_id=photo.id) }}">Modifica</a><a class="danger-link" href="{{ url_for('admin.delete_photo', album_id=album.id, photo_id=photo.id) }}">Elimina<span class="sr-only"> foto {{ loop.index }}</span></a></div></div></article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="panel empty-state"><h3>L’album è pronto per le prime foto.</h3><p>Aggiungi un’immagine con il modulo{% if album.folder %} o sincronizza la cartella Google Drive{% endif %}.</p></div>{% endif %}
+  </section>
+  <section class="panel photo-add" aria-labelledby="add-photo-title"><span class="eyebrow">Aggiungi un ricordo</span><h2 id="add-photo-title">Nuova foto</h2><form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% include 'admin/_campi-foto.html' %}<button class="button full-width" type="submit">Aggiungi foto</button></form></section>
+</div>
+{% endblock %}

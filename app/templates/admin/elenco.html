@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ section_text.label }}{% endblock %}
+{% block content %}
+<div class="page-heading with-actions">
+  <div><span class="eyebrow">Gestione contenuti</span><h1>{{ section_text.label }}</h1><p class="muted">{{ records|length }} contenuti · Modifica, pubblica e organizza questa sezione.</p></div>
+  <a class="button" href="{{ url_for('admin.edit', section=section) }}">Aggiungi {{ section_text.singular|lower }} <span aria-hidden="true">+</span></a>
+</div>
+{% if records %}
+<div class="panel content-list">
+  {% for record in records %}
+  <article class="content-row">
+    {% set preview = record.get('image') or record.get('cover') %}
+    {% if preview %}<img class="row-thumbnail" src="{{ preview if preview.startswith('/') or '://' in preview else '/' ~ preview }}" alt="" loading="lazy">{% endif %}
+    <div class="row-content">
+      <h2><a href="{{ url_for('admin.edit', section=section, item_id=record.id) }}">{{ record.get('title') or record.get('name') }}</a></h2>
+      <p class="row-meta">{{ record.get('date', '') }}<span class="status {{ 'published' if record.published else 'draft' }}">{{ 'Pubblicato' if record.published else 'Bozza' }}</span></p>
+    </div>
+    <div class="row-actions">
+      {% if section == 'foto' %}<a class="text-link" href="{{ url_for('admin.photos', album_id=record.id) }}">Foto</a>{% endif %}
+      <a class="text-link" href="{{ url_for('admin.edit', section=section, item_id=record.id) }}">Modifica</a>
+      <a class="text-link danger-link" href="{{ url_for('admin.delete', section=section, item_id=record.id) }}">Elimina<span class="sr-only"> {{ record.get('title') or record.get('name') }}</span></a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel empty-state"><span class="empty-symbol" aria-hidden="true">＋</span><h2>Cominciamo da qui.</h2><p>Non ci sono ancora contenuti in questa sezione.</p><a class="button" href="{{ url_for('admin.edit', section=section) }}">Aggiungi {{ section_text.singular|lower }}</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% block title %}Accedi{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <div class="login-intro">
+    <span class="eyebrow">Area riservata</span>
+    <h1>La vita della banda,<br>un aggiornamento<br>alla volta.</h1>
+    <p>Gestisci gli eventi, le notizie e le fotografie della Filarmonica.</p>
+  </div>
+  <section class="panel login-panel" aria-labelledby="login-title">
+    <span class="eyebrow">Benvenuto</span>
+    <h2 id="login-title">Accedi alla gestione</h2>
+    <p class="muted">Inserisci la password per continuare.</p>
+    {% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="4096" required autofocus>
+      </div>
+      <button class="button full-width" type="submit">Accedi <span aria-hidden="true">→</span></button>
+    </form>
+  </section>
+</div>
+{% endblock %}

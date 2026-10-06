@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block title %}Elimina {{ section_text.singular|lower }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('admin.listing', section=section) }}">← {{ section_text.label }}</a>
+<section class="panel confirmation">
+  <span class="eyebrow">Conferma eliminazione</span><h1>Eliminare questo contenuto?</h1>
+  <p>Stai per eliminare <strong>{{ record.title or 'Senza titolo' }}</strong>. Il contenuto non sarà più disponibile sul sito.{% if section == 'foto' %} Anche le fotografie associate verranno rimosse dall’album.{% endif %}</p>
+  <p class="muted">Questa operazione non può essere annullata dal pannello.</p>
+  <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-actions"><button class="button danger" type="submit">Elimina definitivamente</button><a class="button secondary" href="{{ url_for('admin.listing', section=section) }}">Annulla</a></div></form>
+</section>
+{% endblock %}

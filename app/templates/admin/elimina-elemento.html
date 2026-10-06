@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% block title %}Elimina {{ 'scheda' if kind == 'feature' else 'insegnante' }}{% endblock %}
+{% block content %}
+{% set return_url = url_for('editorial.features') if kind == 'feature' else url_for('editorial.teachers') %}
+<a class="back-link" href="{{ return_url }}">← {{ 'Scopri la Filarmonica' if kind == 'feature' else 'I nostri insegnanti' }}</a>
+<section class="panel confirmation">
+  <span class="eyebrow">Conferma eliminazione</span><h1>Eliminare {{ 'questa scheda' if kind == 'feature' else 'questo insegnante' }}?</h1>
+  <p>Stai per eliminare <strong>{{ record.title if kind == 'feature' else record.name }}</strong>. Il contenuto non sarà più disponibile sul sito.</p>
+  <p class="muted">Questa operazione non può essere annullata dal pannello.</p>
+  <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-actions"><button class="button danger" type="submit">Elimina definitivamente</button><a class="button secondary" href="{{ return_url }}">Annulla</a></div></form>
+</section>
+{% endblock %}

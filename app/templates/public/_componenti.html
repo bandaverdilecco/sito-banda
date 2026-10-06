@@ -1,0 +1,24 @@
+{% macro event_date(date) %}
+  <span class="event-date">
+    <span class="date-number">{{ date|event_number }}</span>
+    <span class="date-month">{{ date|event_month }}{% if date|length > 7 %}<br />{{ date[:4] }}{% endif %}</span>
+  </span>
+{% endmacro %}
+
+{% macro news_card(article, featured=false) %}
+  <article{% if featured %} class="news-card"{% endif %}>
+    {% if article.image %}
+    <img src="{{ article.image }}" alt="{{ article.image_alt or article.title }}" width="1200" height="800" loading="lazy" />
+    {% endif %}
+    <div class="news-card-copy">
+      <span class="eyebrow">{{ article.date|date_label }}</span>
+      <h3>{{ article.title }}</h3>
+      <p>{{ article.summary }}</p>
+      {% if article.external_url %}
+      <a class="text-link" href="{{ article.external_url }}" target="_blank" rel="noopener noreferrer">Leggi l’articolo originale</a>
+      {% else %}
+      <a class="text-link" href="/blog/{{ article.slug }}.html">Leggi la notizia</a>
+      {% endif %}
+    </div>
+  </article>
+{% endmacro %}

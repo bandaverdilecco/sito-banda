@@ -1,0 +1,34 @@
+{% set navigation = [
+  ('/index.html', 'Home'),
+  ('/la-filarmonica.html', 'La Filarmonica'),
+  ('/scuola-allievi.html', 'Scuola allievi'),
+  ('/prossimi-eventi.html', 'Eventi'),
+  ('/blog.html', 'Notizie'),
+  ('/foto.html', 'Foto'),
+  ('/sostienici.html', 'Sostienici'),
+  ('/contatti.html', 'Contatti')
+] %}
+{% macro navigation_links() %}
+  {% for href, label in navigation %}
+    {% set current = request.path == href or (href == '/index.html' and request.path == '/') %}
+    {% set ancestor = (href == '/blog.html' and request.path.startswith('/blog/')) or (href == '/foto.html' and request.path.startswith('/foto/')) %}
+    <a href="{{ href }}"{% if current %} aria-current="page"{% elif ancestor %} aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+{% endmacro %}
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/index.html">
+      <img class="brand-logo" src="/assets/Logo_filarmonica.svg" alt="Filarmonica Giuseppe Verdi" width="49" height="49" />
+      <span>FILARMONICA<br />GIUSEPPE VERDI</span>
+    </a>
+    <nav aria-label="Navigazione principale" class="main-nav">
+      {{ navigation_links() }}
+    </nav>
+    <details class="mobile-nav">
+      <summary>Menu<span class="menu-arrow" aria-hidden="true"></span></summary>
+      <nav aria-label="Navigazione mobile">
+        {{ navigation_links() }}
+      </nav>
+    </details>
+  </div>
+</header>

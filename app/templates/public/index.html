@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "public/_componenti.html" import event_date, news_card %}
+{% block title %}Home{% endblock %}
+{% block description %}Una storia che continua a suonare insieme alla città. Concerti, tradizione e una scuola in cui iniziare il proprio viaggio nella musica.{% endblock %}
+{% block body_attributes %} class="home-page"{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Lecco · La musica dal 1809</span>
+      <h1>Filarmonica <em>Giuseppe Verdi</em></h1>
+      <p>Storia che continua a suonare insieme alla città. Concerti, tradizione e una scuola in cui iniziare il proprio viaggio nella musica.</p>
+    </div>
+    <figure class="hero-photo">
+      <img alt="La Filarmonica Giuseppe Verdi durante un concerto" fetchpriority="high" height="900" src="/assets/concert.jpg" width="1600" />
+    </figure>
+  </section>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">In calendario</span>
+          <h2>Prossimi appuntamenti</h2>
+        </div>
+        <a class="text-link" href="/prossimi-eventi.html">Tutti gli eventi</a>
+      </div>
+      <div class="event-list">
+        {% for event in events %}
+        <a class="event-row" href="/prossimi-eventi.html#{{ event.slug }}">
+          {{ event_date(event.date) }}
+          <h3>{{ event.title }}</h3>
+          <span class="event-place">{{ event.location }}</span>
+        </a>
+        {% else %}
+        <p>I prossimi appuntamenti saranno annunciati a breve.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% include "public/_scopri-filarmonica.html" %}
+  <section class="section news-section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Dal nostro mondo</span>
+          <h2>Ultime notizie</h2>
+        </div>
+        <a class="text-link" href="/blog.html">Tutte le notizie</a>
+      </div>
+      {% if latest_news %}
+        {{ news_card(latest_news, featured=true) }}
+      {% else %}
+        <p>Le nuove notizie saranno pubblicate qui.</p>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}

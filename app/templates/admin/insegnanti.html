@@ -1,0 +1,27 @@
+{% extends "admin/base.html" %}
+{% block title %}I nostri insegnanti{% endblock %}
+{% block content %}
+<div class="page-heading with-actions">
+  <div><span class="eyebrow">Scuola allievi</span><h1>I nostri insegnanti</h1><p class="muted">{{ records|length }} schede · Gestisci nomi, strumenti e fotografie.</p></div>
+  <a class="button" href="{{ url_for('editorial.teacher_edit') }}">Aggiungi insegnante <span aria-hidden="true">+</span></a>
+</div>
+{% if records %}
+<div class="panel content-list">
+  {% for record in records %}
+  <article class="content-row">
+    {% if record.image %}<img class="row-thumbnail" src="{{ record.image if record.image.startswith('/') or '://' in record.image else '/' ~ record.image }}" alt="" loading="lazy">{% endif %}
+    <div class="row-content">
+      <h2><a href="{{ url_for('editorial.teacher_edit', item_id=record.id) }}">{{ record.name|replace('\n', ' · ') }}</a></h2>
+      <p class="row-meta">{{ record.instrument }} · Ordine: {{ record.sort_order }}<span class="status {{ 'published' if record.published else 'draft' }}">{{ 'Pubblicato' if record.published else 'Bozza' }}</span></p>
+    </div>
+    <div class="row-actions">
+      <a class="text-link" href="{{ url_for('editorial.teacher_edit', item_id=record.id) }}">Modifica<span class="sr-only"> {{ record.name }}</span></a>
+      <a class="text-link danger-link" href="{{ url_for('editorial.teacher_delete', item_id=record.id) }}">Elimina<span class="sr-only"> {{ record.name }}</span></a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel empty-state"><h2>Nessun insegnante.</h2><p>Aggiungi gli insegnanti da mostrare nella pagina della scuola.</p><a class="button" href="{{ url_for('editorial.teacher_edit') }}">Aggiungi insegnante</a></div>
+{% endif %}
+{% endblock %}

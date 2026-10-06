@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "public/_componenti.html" import news_card %}
+{% set archive = namespace(years=[]) %}
+{% for article in news %}
+  {% if article.date[:4] not in archive.years %}{% set archive.years = archive.years + [article.date[:4]] %}{% endif %}
+{% endfor %}
+{% block title %}Notizie{% endblock %}
+{% block description %}Novità e storie della Filarmonica Giuseppe Verdi di Lecco.{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">La vita della banda</span>
+      <h1>Notizie</h1>
+      <p>Progetti, concerti e racconti dalla Filarmonica.</p>
+    </div>
+  </section>
+  {% if archive.years %}
+  <nav aria-label="Notizie per anno" class="section-index">
+    <div class="container section-index-inner">
+      <div class="section-index-links">
+        {% for year in archive.years %}<a href="#notizie-{{ year }}">{{ year }}</a>{% endfor %}
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+  <div class="container page-body news-archive">
+    {% for year in archive.years %}
+    <section class="news-year" id="notizie-{{ year }}" aria-labelledby="titolo-notizie-{{ year }}">
+      <h2 id="titolo-notizie-{{ year }}">{{ year }}</h2>
+      <div class="news-list">
+        {% for article in news if article.date.startswith(year) %}{{ news_card(article) }}{% endfor %}
+      </div>
+    </section>
+    {% else %}
+    <p>Le nuove notizie saranno pubblicate qui.</p>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% if home_features %}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">{{ home_intro.eyebrow }}</span>
+        <h2>{{ home_intro.title }}</h2>
+      </div>
+    </div>
+    <div class="feature-grid">
+      {% for feature in home_features %}
+      <a class="feature-card" href="{{ feature.url }}">
+        <small>{{ feature.eyebrow }}</small>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+        <span class="text-link">{{ feature.link_label }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Operazione non completata · Filarmonica</title><link rel="stylesheet" href="/styles.css"></head>
+<body><main class="container page-body"><h1>Operazione non completata</h1>
+{% if reason == 'csrf' %}<p>La sessione del modulo è scaduta. Torna alla pagina precedente, aggiornala e riprova.</p>
+{% elif reason == 'upload_too_large' %}<p>Il caricamento supera il limite di 16 MB. Scegli un’immagine più piccola.</p>{% endif %}
+<p>Usa il pulsante Indietro del browser per tornare al modulo.</p></main></body></html>

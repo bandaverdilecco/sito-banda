@@ -1,0 +1,45 @@
+{# Python supplies only an outcome code and any changing values. #}
+{% macro messaggio(value) -%}
+  {% set code = value.code if value is mapping else value %}
+  {% if code == 'login_required' %}Accedi per continuare nell’area di gestione.
+  {% elif code == 'login_limited' %}Accesso temporaneamente sospeso. Riprova tra 15 minuti.
+  {% elif code == 'password_invalid' %}Password non corretta.
+  {% elif code == 'logged_out' %}Hai effettuato la disconnessione.
+  {% elif code == 'content_saved' %}Modifiche salvate.
+  {% elif code == 'content_added' %}Contenuto aggiunto.
+  {% elif code == 'content_deleted' %}Contenuto eliminato.
+  {% elif code == 'home_saved' %}Selezione della home salvata.
+  {% elif code == 'intro_saved' %}Intestazione aggiornata.
+  {% elif code == 'feature_url_invalid' %}Inserisci un collegamento HTTPS o un percorso del sito che inizi con /.
+  {% elif code == 'selection_invalid' %}Seleziona solo contenuti pubblicati e al massimo una notizia.
+  {% elif code == 'photo_added' %}Foto aggiunta all’album.
+  {% elif code == 'photo_saved' %}Foto aggiornata.
+  {% elif code == 'photo_deleted' %}Foto rimossa dall’album.
+  {% elif code == 'image_format' %}Usa una fotografia JPG, PNG, WebP o GIF.
+  {% elif code == 'image_invalid' %}Immagine non valida o troppo grande (massimo 30 megapixel).
+  {% elif code == 'image_url_invalid' %}Le immagini devono usare un URL HTTPS o un percorso /assets/ o /uploads/.
+  {% elif code == 'drive_photo_invalid' %}Link della fotografia Drive non valido.
+  {% elif code == 'https_invalid' %}Inserisci un collegamento HTTPS valido.
+  {% elif code == 'drive_folder_invalid' %}Inserisci il link di una cartella pubblica Google Drive.
+  {% elif code == 'date_invalid' %}Data non valida. Usa il formato indicato nel campo.
+  {% elif code == 'order_invalid' %}L’ordine deve essere un numero intero tra -1000000 e 1000000.
+  {% elif code == 'required_fields' %}Compila tutti i campi obbligatori contrassegnati con *.
+  {% elif code == 'slug_invalid' %}L’indirizzo breve può contenere solo lettere minuscole, numeri e trattini.
+  {% elif code == 'article_required' %}Scrivi il testo della notizia oppure inserisci un link esterno.
+  {% elif code == 'cover_position_invalid' %}La posizione della copertina deve contenere due percentuali, per esempio 50% 30%.
+  {% elif code == 'slug_duplicate' %}Questo indirizzo breve è già utilizzato. Scegline un altro.
+  {% elif code == 'fields_invalid' %}Campi non validi.
+  {% elif code == 'content_invalid' %}Indirizzo breve già utilizzato o dati non validi.
+  {% elif code == 'photo_missing' %}Fotografia non trovata.
+  {% elif code == 'description_too_long' %}Descrizione troppo lunga.
+  {% elif code == 'photo_required' %}Carica una fotografia oppure inserisci il collegamento.
+  {% elif code == 'photo_duplicate' %}Fotografia già presente nell’album o album non trovato.
+  {% elif code == 'drive_folder_required' %}Salva prima il collegamento alla cartella Google Drive.
+  {% elif code == 'drive_sync_failed' %}Sincronizzazione non riuscita. Verifica che la cartella sia pubblica e riprova; le fotografie precedenti sono conservate.
+  {% elif code == 'sync_complete' %}Sincronizzazione completata: {{ value.count }} foto importate o aggiornate.
+  {% elif code == 'field_too_long' %}
+    {% set labels = {'title': 'Titolo', 'slug': 'Indirizzo breve', 'date': 'Data', 'location': 'Luogo', 'description': 'Descrizione', 'summary': 'Sommario', 'body': 'Articolo', 'external_url': 'Link articolo esterno', 'image': 'Immagine', 'image_alt': 'Descrizione dell’immagine', 'folder': 'Cartella pubblica Google Drive', 'cover': 'Copertina', 'cover_alt': 'Descrizione della copertina', 'cover_position': 'Posizione della copertina', 'eyebrow': 'Sopratitolo', 'url': 'Collegamento', 'link_label': 'Testo del collegamento', 'name': 'Nome', 'instrument': 'Strumento'} %}
+    Il campo «{{ labels.get(value.field, value.field) }}» è troppo lungo (massimo {{ value.maximum }} caratteri).
+  {% else %}Operazione non completata. Riprova.
+  {% endif %}
+{%- endmacro %}

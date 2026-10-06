@@ -1,0 +1,42 @@
+{% extends "admin/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <span class="eyebrow">Prima pagina</span>
+  <h1>Contenuti della home</h1>
+  <p class="muted">Scegli tra i contenuti pubblicati. Le nuove pubblicazioni non vengono aggiunte automaticamente.</p>
+</div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+<form method="post" class="panel edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <fieldset class="field home-selection" aria-describedby="events-help">
+    <legend>Prossimi appuntamenti</legend>
+    <p class="help" id="events-help">Seleziona quanti eventi vuoi: appariranno in ordine cronologico.</p>
+    {% for event in events %}
+    <label class="content-row" for="event-{{ event.id }}">
+      <input type="checkbox" id="event-{{ event.id }}" name="event_ids" value="{{ event.id }}" {% if event.id in selected_event_ids %}checked{% endif %}>
+      <span class="row-content"><strong>{{ event.title }}</strong><span class="row-meta">{{ event.date }} · {{ event.location }}</span></span>
+    </label>
+    {% else %}
+    <p class="muted">Nessun evento pubblicato. <a href="{{ url_for('admin.edit', section='eventi') }}">Aggiungi un evento</a>.</p>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="field home-selection" aria-describedby="news-help">
+    <legend>Ultime notizie</legend>
+    <p class="help" id="news-help">Scegli una sola notizia da mostrare nella home.</p>
+    <label class="content-row" for="news-none">
+      <input type="radio" id="news-none" name="news_id" value="" {% if selected_news_id is none %}checked{% endif %}>
+      <span class="row-content">Nessuna notizia</span>
+    </label>
+    {% for article in news %}
+    <label class="content-row" for="news-{{ article.id }}">
+      <input type="radio" id="news-{{ article.id }}" name="news_id" value="{{ article.id }}" {% if article.id == selected_news_id %}checked{% endif %}>
+      <span class="row-content"><strong>{{ article.title }}</strong><span class="row-meta">{{ article.date }}</span></span>
+    </label>
+    {% else %}
+    <p class="muted">Nessuna notizia pubblicata. <a href="{{ url_for('admin.edit', section='notizie') }}">Aggiungi una notizia</a>.</p>
+    {% endfor %}
+  </fieldset>
+  <div class="form-actions"><button class="button" type="submit">Salva selezione</button><a class="button secondary" href="{{ url_for('admin.index') }}">Annulla</a></div>
+</form>
+{% endblock %}

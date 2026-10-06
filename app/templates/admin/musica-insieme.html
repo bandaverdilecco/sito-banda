@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+{% block title %}Scopri la Filarmonica{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <span class="eyebrow">Home</span>
+  <h1>Scopri la Filarmonica</h1>
+  <p class="muted">Modifica l’intestazione e le schede di questa sezione.</p>
+</div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+<form method="post" class="panel edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2>Intestazione</h2>
+  <div class="field">
+    <label for="eyebrow">Sopratitolo</label>
+    <input name="eyebrow" id="eyebrow" type="text" value="{{ values.get('eyebrow', '') }}">
+  </div>
+  <div class="field">
+    <label for="title">Titolo nella home <span aria-hidden="true">*</span></label>
+    <input name="title" id="title" type="text" value="{{ values.get('title', '') }}" required>
+  </div>
+  <div class="form-actions"><button class="button" type="submit">Salva intestazione</button></div>
+</form>
+<div class="page-heading with-actions editorial-list-heading">
+  <div><h2>Schede</h2><p class="muted">{{ records|length }} schede · I numeri più bassi compaiono per primi.</p></div>
+  <a class="button" href="{{ url_for('editorial.feature_edit') }}">Aggiungi scheda <span aria-hidden="true">+</span></a>
+</div>
+{% if records %}
+<div class="panel content-list">
+  {% for record in records %}
+  <article class="content-row">
+    <div class="row-content">
+      <h2><a href="{{ url_for('editorial.feature_edit', item_id=record.id) }}">{{ record.title }}</a></h2>
+      <p class="row-meta">Ordine: {{ record.sort_order }}<span class="status {{ 'published' if record.published else 'draft' }}">{{ 'Pubblicato' if record.published else 'Bozza' }}</span></p>
+    </div>
+    <div class="row-actions">
+      <a class="text-link" href="{{ url_for('editorial.feature_edit', item_id=record.id) }}">Modifica<span class="sr-only"> {{ record.title }}</span></a>
+      <a class="text-link danger-link" href="{{ url_for('editorial.feature_delete', item_id=record.id) }}">Elimina<span class="sr-only"> {{ record.title }}</span></a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel empty-state"><h2>Nessuna scheda.</h2><p>Aggiungi una scheda per mostrarla in questa sezione della home.</p><a class="button" href="{{ url_for('editorial.feature_edit') }}">Aggiungi scheda</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }}{% endblock %}
+{% block description %}{{ article.summary }}{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">{{ article.date|date_label }}</span>
+      <h1>{{ article.title }}</h1>
+      <p>{{ article.summary }}</p>
+    </div>
+  </section>
+  <section class="container page-body">
+    <a class="back-link" href="/blog.html">Torna alle notizie</a>
+    <article class="prose">
+      {% if article.image %}
+      <img class="page-image" alt="{{ article.image_alt or article.title }}" src="{{ article.image }}" width="1200" height="800" loading="lazy" />
+      {% endif %}
+      {{ article.body|safe }}
+    </article>
+  </section>
+</main>
+{% endblock %}

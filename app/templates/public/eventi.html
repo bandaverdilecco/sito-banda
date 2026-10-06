@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "public/_componenti.html" import event_date %}
+{% block title %}Prossimi eventi{% endblock %}
+{% block description %}Concerti e appuntamenti della Filarmonica Giuseppe Verdi di Lecco.{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">In calendario</span>
+      <h1>Prossimi eventi</h1>
+      <p>Incontra la Filarmonica nei concerti e negli appuntamenti sul territorio.</p>
+    </div>
+  </section>
+  <section class="container page-body">
+    {% for event in events %}
+    <article class="event-card" id="{{ event.slug }}">
+      {{ event_date(event.date) }}
+      <div>
+        <h2>{{ event.title }}</h2>
+        <p><strong>{{ event.location }}</strong></p>
+        {% for paragraph in event.description.split('\n') if paragraph %}<p>{{ paragraph }}</p>{% endfor %}
+      </div>
+    </article>
+    {% else %}
+    <p>I prossimi appuntamenti saranno annunciati a breve.</p>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

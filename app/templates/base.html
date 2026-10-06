@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="{% block description %}Concerti, scuola e notizie della Filarmonica Giuseppe Verdi di Lecco.{% endblock %}" />
+    <title>{% block title %}Filarmonica{% endblock %} · Filarmonica Giuseppe Verdi Lecco</title>
+    <link href="/assets/Logo_filarmonica.svg" rel="icon" type="image/svg+xml" />
+    <link href="/styles.css" rel="stylesheet" />
+    {% block head %}{% endblock %}
+  </head>
+  <body{% block body_attributes %}{% endblock %}>
+    <a class="skip-link" href="#contenuto">Vai al contenuto</a>
+    {% include "public/_header.html" %}
+    {% block content %}{% endblock %}
+    {% include "public/_footer.html" %}
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

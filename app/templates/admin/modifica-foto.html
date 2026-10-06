@@ -1,0 +1,8 @@
+{% extends "admin/base.html" %}
+{% block title %}Modifica foto{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('admin.photos', album_id=album.id) }}">← {{ album.title }}</a>
+<div class="page-heading"><span class="eyebrow">{{ album.title }}</span><h1>Modifica foto</h1></div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="panel edit-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><img class="image-preview" src="{{ photo.src if photo.src.startswith('/') or '://' in photo.src else '/' ~ photo.src }}" alt="{{ photo.alt }}">{% include 'admin/_campi-foto.html' %}<div class="form-actions"><button class="button" type="submit">Salva modifiche</button><a class="button secondary" href="{{ url_for('admin.photos', album_id=album.id) }}">Annulla</a></div></form>
+{% endblock %}

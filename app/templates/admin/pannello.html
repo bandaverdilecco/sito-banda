@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% block title %}Panoramica{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <span class="eyebrow">Il tuo spazio di lavoro</span>
+  <h1>Gestione dei contenuti</h1>
+  <p class="muted">Tutto quello che racconta la Filarmonica. Scegli una sezione per aggiornarla.</p>
+</div>
+<div class="dashboard-grid">
+  {% set descriptions = {'eventi': 'Concerti, appuntamenti e occasioni per incontrarci.', 'notizie': 'Novità, progetti e racconti della vita della banda.', 'foto': 'Album e fotografie per conservare i momenti più belli.'} %}
+  {% for slug, settings in sections.items() %}
+  <a class="dashboard-card" href="{{ url_for('admin.listing', section=slug) }}">
+    <span class="card-count">{{ counts[slug] }} <span>contenuti</span></span>
+    <h2>{{ settings.label }}</h2>
+    <p>{{ descriptions[slug] }}</p>
+    <span class="card-action">Gestisci <span aria-hidden="true">↗</span></span>
+  </a>
+  {% endfor %}
+  <a class="dashboard-card" href="{{ url_for('editorial.home') }}">
+    <h2>Home</h2>
+    <p>Scegli gli appuntamenti e la notizia da mostrare in prima pagina.</p>
+    <span class="card-action">Gestisci <span aria-hidden="true">↗</span></span>
+  </a>
+  <a class="dashboard-card" href="{{ url_for('editorial.features') }}">
+    <h2>Scopri la Filarmonica</h2>
+    <p>Modifica i testi e i collegamenti delle schede nella home.</p>
+    <span class="card-action">Gestisci <span aria-hidden="true">↗</span></span>
+  </a>
+  <a class="dashboard-card" href="{{ url_for('editorial.teachers') }}">
+    <h2>I nostri insegnanti</h2>
+    <p>Gestisci nomi, strumenti e fotografie nella pagina della scuola.</p>
+    <span class="card-action">Gestisci <span aria-hidden="true">↗</span></span>
+  </a>
+</div>
+<p class="workspace-note">I contenuti pubblicati sono visibili subito sul sito. Disattiva “Pubblicato” per conservare un contenuto come bozza.</p>
+{% endblock %}

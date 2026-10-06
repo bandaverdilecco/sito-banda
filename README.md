@@ -1,165 +1,190 @@
 # Filarmonica Giuseppe Verdi · Lecco
 
-Sito in HTML e CSS. I contenuti sono nei file di `public/` e `data/`: nessun database o pannello admin. Un piccolo script condiviso gestisce la visualizzazione e il download delle fotografie nelle gallerie.
+Il sito usa **Flask**, template **Jinja** e un database **SQLite**. Eventi, notizie, album, fotografie, insegnanti e schede introduttive si aggiornano dal pannello `/admin`, dove puoi anche scegliere i contenuti in evidenza nella homepage. Le modifiche salvate sono subito visibili sul sito, senza rigenerare le pagine.
 
-## Aprire il sito
+Il sito pubblico conserva gli indirizzi esistenti, la grafica e le gallerie. Il collegamento al pannello non compare nei menu pubblici: per accedere occorre conoscere l’indirizzo e autenticarsi.
 
-Per aprire il sito senza server, esegui `npm run build` e apri **`dist/index.html`** nel browser. Le pagine generate includono header e footer e funzionano anche senza connessione; le fotografie degli album vengono caricate da Google Drive e richiedono Internet.
+## Primo avvio
 
-Per un'anteprima locale con Node.js 22 o successivo:
-
-```bash
-npm run dev
-```
-
-Sul computer apri http://127.0.0.1:8080. Sul telefono collegato alla stessa rete Wi-Fi, usa l’IP locale del computer, completo di `http://` e porta `8080`, per esempio `http://192.168.1.59:8080`. Puoi trovare l’IP nelle impostazioni di rete del computer. Lascia il server acceso mentre navighi dal telefono.
-
-Dopo una modifica, salva il file e aggiorna la pagina. Per aggiornare la homepage esegui prima la build. Arresta il server con `Ctrl+C`.
-
-Il server accetta già connessioni dalla rete locale. Per cambiare porta o limitarlo al solo computer:
+Serve Python 3.11 o successivo. Dalla cartella del progetto, su Linux o macOS:
 
 ```bash
-npm run dev -- --port 3000
-npm run dev -- --ip 127.0.0.1
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m flask --app app create-admin
+.venv/bin/python -m flask --app app run --port 8080
 ```
 
-## Dove modificare i contenuti
+Su Windows crea l’ambiente con `py -m venv .venv` e sostituisci `.venv/bin/python` con `.venv\Scripts\python.exe` nei comandi successivi.
 
-| Contenuto | File |
+Apri [http://127.0.0.1:8080](http://127.0.0.1:8080). Per amministrare il sito visita [http://127.0.0.1:8080/admin](http://127.0.0.1:8080/admin).
+
+Il comando `create-admin` chiede soltanto la password, con conferma. La password non viene mostrata mentre la digiti. **Non esistono credenziali predefinite**. Puoi ripetere il comando per creare altri amministratori.
+
+La pagina `/admin` richiede soltanto la password. Non vengono memorizzati nomi utente. Usa password diverse per amministratori diversi: se più account condividono la stessa password, l’accesso viene associato al primo account creato.
+
+Per cambiare la password di un account esistente:
+
+```bash
+.venv/bin/python -m flask --app app create-admin --reset-password
+```
+
+Il cambio password revoca le sessioni già aperte dell’account. Il comando opera sullo stesso database usato dal sito: in produzione imposta anche qui `CMS_INSTANCE_PATH` con il percorso del servizio.
+
+Se esistono più amministratori, il comando elenca gli ID disponibili: aggiungi `--admin-id ID` per scegliere quale password cambiare. I database precedenti vengono aggiornati automaticamente all’avvio, eliminando i nomi utente e conservando password e sessioni.
+
+Il server locale ascolta solo sul computer. Per provarlo da un telefono nella stessa rete:
+
+```bash
+.venv/bin/python -m flask --app app run --host 0.0.0.0 --port 8080
+```
+
+Apri sul telefono `http://IP-DEL-COMPUTER:8080`. Per cambiare porta sostituisci `8080` con quella desiderata. Arresta il server con `Ctrl+C`.
+
+Le modifiche ai template HTML vengono rilevate alla richiesta successiva anche senza debug: salva il file e aggiorna la pagina. Per ricaricare automaticamente anche il codice Python, avvialo con `.venv/bin/python -m flask --app app run --debug --port 8080`. Usa questa modalità soltanto sul tuo computer, mantenendo l’indirizzo predefinito `127.0.0.1`.
+
+## Usare il pannello
+
+Prima dell’accesso, `/admin` mostra il modulo di login. Dopo l’accesso lo stesso indirizzo mostra il riepilogo con i collegamenti alle aree di gestione.
+
+| Area | Contenuti modificabili |
 | --- | --- |
-| Titolo, foto e struttura della homepage | `templates/index.html` |
-| Sezione «Scopri la Filarmonica» | `public/partials/scopri-filarmonica.html` |
-| Eventi e notizia in homepage | Generati da `public/prossimi-eventi.html` e `public/blog.html` |
-| Calendario completo | `public/prossimi-eventi.html` |
-| Elenco delle notizie | `public/blog.html` |
-| Testo di ogni notizia | `public/blog/*.html` |
-| Titoli, date, descrizioni, cartelle Drive e copertine degli album | `data/albums.json` |
-| Impaginazione della pagina Foto e delle gallerie | `templates/foto.html`, `templates/album.html` |
-| Visualizzatore delle fotografie | `public/gallery.js` |
-| Storia, direttivo, maestro e servizi | `public/la-filarmonica.html` |
-| Scuola, insegnanti e Pronti, settembre, via! | `public/scuola-allievi.html` |
-| Donazioni e contatti | `public/sostienici.html`, `public/contatti.html` |
-| Colori, caratteri, spazi e layout mobile | `public/styles.css` |
-| Fotografie | `public/assets/` |
-| Header e menu desktop/mobile | `public/partials/header.html` |
-| Footer condiviso | `public/partials/footer.html` |
+| Eventi | Titolo, indirizzo breve, data, luogo, descrizione e orario |
+| Notizie | Titolo, indirizzo breve, data, sommario, testo formattato, immagine ed eventuale articolo esterno |
+| Foto | Album, mese e anno, descrizione e crediti, copertina, cartella Drive e fotografie di ciascun album |
+| Homepage | Appuntamenti da mostrare e una notizia in evidenza |
+| Scopri la Filarmonica | Titolo della sezione e schede con testi, collegamenti e ordine |
+| I nostri insegnanti | Nomi, strumenti, fotografie, descrizioni delle immagini e ordine |
 
-Ogni pagina richiama le parti condivise con `<!-- include: header -->` e `<!-- include: footer -->`. Il server locale e la build inseriscono automaticamente i due file di `public/partials/`. Cerca il commento `CONTENUTO` per trovare la parte da modificare. I colori principali sono raccolti nelle variabili all’inizio di `public/styles.css`.
+Le aree dei contenuti permettono di aggiungere, modificare ed eliminare le schede. L’opzione **Pubblicato sul sito** controlla la visibilità: disattivala per conservare una bozza. L’eliminazione richiede una conferma e non dispone di annullamento dal pannello; per recuperare dati eliminati serve un backup.
 
-I testi sono dentro tag come `<h1>`, `<h2>` e `<p>`; i collegamenti sono nell'attributo `href` e le immagini nell'attributo `src`.
+L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/blog/concerto-autunno.html` e `/foto/concerto-autunno.html`. Mantienilo invariato quando un collegamento è già stato condiviso.
 
-Le pagine **La Filarmonica** e **Scuola allievi** raccolgono i contenuti in sezioni. L’indice iniziale usa collegamenti come `href="#storia"`, che puntano alla sezione con `id="storia"`. Per aggiungere una sezione, copia un blocco `<section class="section content-block">`, scegli un `id` unico e aggiungi il relativo link nell’indice. Le sezioni di contenuto direttamente dentro `<main>` con classe `section` alternano automaticamente sfondo chiaro e più scuro, iniziando dal chiaro. Il banner iniziale è escluso dal conteggio; non servono classi di colore manuali. I vecchi indirizzi sono elencati in `public/_redirects` e rimandano alle sezioni corrispondenti.
+Per eventi e notizie puoi indicare una data completa `AAAA-MM-GG` oppure soltanto mese e anno `AAAA-MM`. Gli album usano `AAAA-MM`. Le date originali che indicavano solo il mese mantengono questa precisione.
 
-### Homepage automatica
+In **Homepage** (`/admin/home`) seleziona quanti appuntamenti vuoi e una sola notizia per “Ultime notizie”. Puoi anche lasciare entrambe le sezioni senza selezioni. Gli eventi scelti sono mostrati in ordine cronologico, senza limite di numero; rimangono selezionati anche dopo la loro data. Le bozze e i contenuti eliminati non vengono mostrati né sostituiti automaticamente.
 
-La homepage viene generata **solo durante la build**. Modifica `templates/index.html` per il titolo, la foto e l’impaginazione; modifica `public/partials/scopri-filarmonica.html` per la sezione «Scopri la Filarmonica».
+Fino al primo salvataggio di questa pagina resta la selezione automatica precedente: tre prossimi eventi e la notizia pubblicata più recente. Il salvataggio passa alla selezione manuale.
 
-I commenti `<!-- include: home-events -->` e `<!-- include: home-news -->` del template importano i riepiloghi dai rispettivi elenchi HTML. La data viene letta dal testo visibile: usa nomi italiani dei mesi e un anno di quattro cifre. `<!-- include: scopri-filarmonica -->` importa il frammento dedicato.
+In **Scopri la Filarmonica** (`/admin/musica-insieme`) puoi cambiare “La musica si vive insieme.” nel campo **Titolo nella home**, aggiungere o modificare le schede e impostarne l’ordine. In **I nostri insegnanti** (`/admin/insegnanti`) puoi gestire le schede degli insegnanti, caricare le fotografie e disporle nell’ordine desiderato. Per una scheda condivisa, scrivi ogni nome su una riga distinta.
 
-Dopo aver cambiato eventi, notizie o il frammento, esegui:
+Il testo delle notizie dispone di comandi di formattazione. Il server ammette paragrafi, titoli, elenchi, collegamenti e immagini e pulisce l’HTML al salvataggio. Inserendo un **Link articolo esterno**, la scheda pubblica collega direttamente la fonte esterna.
 
-```bash
-npm run build
-```
+## Album e fotografie
 
-La build aggiorna sia `public/index.html`, usato dall’anteprima, sia `dist/index.html`, pronto per la pubblicazione. Poi basta aggiornare il browser, senza riavviare `npm run dev`. Non modificare `public/index.html` direttamente: è un file generato. Header e footer rimangono condivisi con le altre pagine.
+Crea un album dall’area Foto e poi apri **Gestisci le foto**. Puoi caricare una fotografia, indicare un URL HTTPS, cambiare la descrizione e il numero d’ordine, sostituire l’immagine o rimuoverla dall’album. I numeri d’ordine più piccoli vengono mostrati prima. La copertina dell’album si modifica separatamente.
 
-### Aggiungere un evento
+I caricamenti accettano JPG, PNG, WebP e GIF, fino a **16 MB per richiesta** e **30 megapixel per immagine**. Il server applica l’orientamento della foto, riduce il lato maggiore a 3200 pixel quando necessario e salva una copia WebP. Le GIF diventano immagini statiche. Il download delle immagini caricate restituisce questa copia elaborata; conserva separatamente i file originali se ti servono alla risoluzione iniziale.
 
-In `public/prossimi-eventi.html`, copia un blocco `<article class="event-card" ...>...</article>` e modifica data, titolo, luogo e descrizione. Assegna un `id` diverso e disponi gli eventi nell'ordine desiderato. La data è divisa in `date-number` (giorno) e `date-month` (mese e anno); per una data ancora da definire puoi scrivere il mese abbreviato al posto del giorno.
+Le immagini possono anche usare percorsi già presenti nel sito, come `/assets/foto/copertina.jpg`, o URL HTTPS. Il pannello converte i collegamenti ai singoli file Google Drive in URL visualizzabili.
 
-```html
-<article class="event-card" id="nome-evento">
-  <div class="event-date">
-    <span class="date-number">08</span>
-    <span class="date-month">Novembre<br />2026</span>
-  </div>
-  <div>
-    <h2>Titolo del concerto</h2>
-    <p><strong>Luogo</strong></p>
-    <p>Orario e informazioni utili.</p>
-  </div>
-</article>
-```
+Eliminare una fotografia dal pannello elimina il suo riferimento nell’album. I file già caricati in `uploads/` vengono conservati, anche quando un riferimento viene rimosso o sostituito.
 
-La homepage seleziona automaticamente i tre prossimi appuntamenti in ordine di data, includendo quelli di oggi (fuso Europe/Rome). Gli eventi senza giorno preciso restano visibili fino alla fine del mese indicato. Se non ci sono appuntamenti futuri compare un messaggio provvisorio. Modifica soltanto `public/prossimi-eventi.html`: non devi ricopiare gli eventi nella homepage.
+### Sincronizzare Google Drive
 
-### Aggiungere una notizia
+1. Rendi la cartella e le fotografie accessibili a chiunque abbia il collegamento.
+2. Salva il link della cartella nel campo dell’album dedicato a Google Drive.
+3. Apri la gestione delle fotografie e premi **Sincronizza foto**.
 
-1. Copia una pagina di `public/blog/`, per esempio in `public/blog/nuovo-concerto.html`.
-2. Cambia titolo, descrizione nel `<head>`, data, foto e testo dentro `<main>`.
-3. Copia un blocco `<article>` in `public/blog.html` e collega la nuova pagina con `href="blog/nuovo-concerto.html"`.
-4. La homepage mostra automaticamente la notizia con il mese e anno più recenti, usando la stessa immagine, descrizione e collegamento. A parità di mese viene scelta quella che compare prima in `public/blog.html`.
+La sincronizzazione legge anche le sottocartelle ed esclude i video. Aggiorna soltanto l’album selezionato: le foto Drive già presenti mantengono descrizioni e ordine, quelle non più presenti nella cartella vengono rimosse dall’album e le nuove vengono aggiunte in fondo, ordinate per nome. Le foto caricate dal computer e i collegamenti aggiunti manualmente restano conservati. Il primo import in un album vuoto segue l’ordine dei nomi dei file.
 
-### Cambiare una foto o aggiungere una pagina
+Un errore durante la lettura di Drive conserva la galleria precedente. Le fotografie restano ospitate su Drive: l’importazione salva i collegamenti, non scarica i file. Per vedere le immagini esterne serve una connessione Internet. Le modifiche fatte su Drive compaiono nel sito soltanto dopo una nuova sincronizzazione dal pannello.
 
-Metti la foto in `public/assets/` e modifica `src` e `alt` nell'HTML. Nelle pagine principali usa `src="assets/foto.jpg"`; nelle notizie dentro `blog/` usa `src="../assets/foto.jpg"`.
+Se necessario, configura `GOOGLE_DRIVE_API_KEY` nell’ambiente del processo del sito, con Drive API abilitata nel relativo progetto Google Cloud. La chiave rimane sul server. La cache degli elenchi è in `.cache/drive/`; il comando del pannello verifica comunque gli aggiornamenti remoti.
 
-### Album fotografici automatici
+## Template e struttura del progetto
 
-La pagina **Foto**, il suo indice per anno e tutte le gallerie sono generati da `data/albums.json`. Aggiungi un elemento all’array `albums`:
+| Percorso | Ruolo |
+| --- | --- |
+| `app/__init__.py` | Applicazione Flask, pagine pubbliche, configurazione e comandi amministrativi |
+| `app/admin.py` | Login, sessioni e pagine del pannello |
+| `app/editorial.py` | Selezioni della homepage, schede introduttive e insegnanti |
+| `app/content.py` | Validazione dei contenuti, salvataggi e sincronizzazione Drive |
+| `app/drive.py` | Lettura delle cartelle Google Drive e cache, in Python |
+| `app/templates/base.html` | Struttura HTML comune delle pagine pubbliche |
+| `app/templates/public/` | Template delle pagine, header, footer e componenti condivisi |
+| `app/templates/admin/` | Template del pannello |
+| `app/schema.sql` | Schema SQLite: contenuti, account, sessioni e metadati |
+| `public/styles.css` e `public/admin.css` | Stili del sito e del pannello |
+| `public/gallery.js` | Ingrandimento, navigazione e download nelle gallerie |
+| `public/assets/` | Immagini e risorse originali |
+| `public/_redirects` | Reindirizzamenti degli indirizzi precedenti, applicati da Flask |
+| `instance/` | Database, immagini caricate e chiave delle sessioni; esclusi da Git |
 
-```json
-{
-  "slug": "concerto-autunno-2026",
-  "title": "Concerto d’autunno",
-  "date": "2026-10",
-  "description": "Lecco · Foto di Nome Cognome",
-  "folder": "",
-  "cover": ""
-}
-```
+Le pagine usano `{% extends "base.html" %}`, blocchi Jinja e componenti condivisi. Per cambiare la navigazione modifica `app/templates/public/_header.html`; per il footer modifica `app/templates/public/_footer.html`.
 
-- `slug`: nome univoco usato nell’indirizzo `foto/concerto-autunno-2026.html`. Usa lettere minuscole, numeri e trattini. Mantienilo invariato per conservare il collegamento.
-- `date`: mese e anno nel formato `YYYY-MM`. L’elenco mostra automaticamente gli album più recenti per primi.
-- `folder`: link della cartella pubblica Google Drive, per esempio `https://drive.google.com/drive/folders/ID_CARTELLA`. Puoi lasciarlo vuoto per gli album ancora da completare. La galleria include le immagini della cartella e delle sue sottocartelle, ordinate per nome; i video sono esclusi e le fotografie duplicate compaiono una volta sola.
-- `cover`: collegamento separato alla foto per la pagina Foto. Accetta un link pubblico Google Drive a un singolo file, un URL HTTPS diretto a un’immagine, oppure un percorso locale come `assets/foto/copertina.jpg`. Una stringa vuota mostra una copertina provvisoria.
-- `coverAlt` e `coverPosition` sono facoltativi: testo alternativo e ritaglio, per esempio `"50% 30%"`.
+I campi dei moduli, le etichette e i testi di aiuto del pannello sono nei file HTML in `app/templates/admin/`; i messaggi di esito e validazione sono in `app/templates/admin/_messaggi.html`. Python gestisce dati e controlli, senza generare i moduli o definirne i testi.
 
-Con `folder` vuoto, l’album mostra «Le fotografie saranno disponibili a breve». Inserendo un link, la galleria viene generata dalle fotografie della cartella.
+I contenuti non gestiti dal pannello, come storia, contatti e tariffe della scuola, rimangono nei template pubblici. Le schede “Scopri la Filarmonica” e “I nostri insegnanti” sono invece memorizzate nel database e si modificano dal pannello; etichette e istruzioni dei moduli restano nei template HTML.
 
-Con `npm run dev`, salva il JSON: il browser si aggiorna automaticamente. In alternativa esegui `npm run build`: vengono create sia `dist/foto.html` sia le pagine in `dist/foto/`. Non devi creare HTML o aggiornare l’indice a mano. Titolo e descrizione sono testo semplice, senza tag HTML. Per cambiare l’impaginazione modifica i due file in `templates/`.
+### Contenuti del sito
 
-Le cartelle e le immagini devono essere accessibili a chiunque abbia il link. Il generatore legge la vista pubblica di Drive; per gli elenchi oltre i primi 50 elementi usa la vista pubblica incorporabile completa. Se le viste pubbliche non sono leggibili, puoi configurare la variabile d’ambiente `GOOGLE_DRIVE_API_KEY` con una chiave di un progetto Google Cloud con Drive API abilitata. La chiave viene usata solo durante la generazione, non è inclusa nel sito. Con l’API il generatore segue tutte le pagine dell’elenco. Un errore di accesso interrompe la build prima di sostituire la precedente, evitando di pubblicare un album incompleto. Vedi la [documentazione Google sulla ricerca dei file](https://developers.google.com/workspace/drive/api/guides/search-files).
+Una nuova installazione parte senza eventi, notizie o album: aggiungili dal pannello. Le tre schede introduttive e le sei schede degli insegnanti già presenti nel sito vengono inserite una sola volta nelle nuove tabelle, per conservarne la presentazione durante il passaggio alla gestione dal pannello. I riavvii non ripristinano le schede eliminate né sovrascrivono le modifiche. Gli altri contenuti esistenti rimangono invariati.
 
-Il server di anteprima osserva `data/albums.json`, anche quando l’editor lo salva sostituendo il file. Le pagine aperte si ricaricano automaticamente. Questo aggiornamento è attivo solo con `npm run dev`; i file statici pubblicati richiedono una nuova build. In anteprima l’elenco di ciascuna cartella viene tenuto in memoria per un minuto. Sul sito pubblicato, per aggiungere o togliere foto dalla galleria occorre rigenerare e ricaricare `dist/`. Le fotografie rimangono su Drive e richiedono Internet. Il visualizzatore mantiene ingrandimento, navigazione con tastiera e download dell’originale.
+Per trasferire i contenuti su un’altra installazione, conserva il database e le immagini caricate come descritto sotto. Le pagine statiche rimangono nei template in `app/templates/`.
 
-Per aggiungere una pagina, copia un file HTML dalla stessa cartella e mantieni i due commenti `include`. Per modificare il menu, aggiorna solo `public/partials/header.html`, nelle versioni desktop e mobile. Per modificare il footer, aggiorna solo `public/partials/footer.html`. Nei file condivisi scrivi i percorsi rispetto a `public/`, per esempio `index.html` e `assets/Logo_filarmonica.svg`: i percorsi delle pagine in sottocartelle e l’indicazione della pagina corrente vengono adattati automaticamente.
+## Dati persistenti e backup
 
-La pagina contatti usa collegamenti email e telefono. Il pulsante email apre il programma di posta del visitatore; il sito non raccoglie messaggi.
+Il percorso predefinito è `instance/` nella cartella del progetto:
 
-## Pubblicare
+- `site.sqlite3`: database dei contenuti, account e sessioni;
+- `uploads/`: immagini caricate dal pannello;
+- `secret.key`: chiave creata automaticamente al primo avvio, se `SECRET_KEY` non è già configurata nell’ambiente.
 
-Genera il sito e carica il **contenuto** di `dist/` su un qualsiasi hosting statico. L'homepage deve essere `index.html` nella cartella pubblica dell'hosting.
+Per usare una cartella persistente esterna al checkout, imposta `CMS_INSTANCE_PATH` **prima** di creare l’amministratore o avviare il sito. La cartella deve essere scrivibile dall’utente del servizio. Tutte le istanze dello stesso sito devono utilizzare gli stessi dati e la stessa chiave.
+
+Esempio di backup coerente del database, anche mentre il sito è in esecuzione:
 
 ```bash
-npm run build
+.venv/bin/python -m flask --app app backup-db /percorso/backup/site-2026-10-06.sqlite3
 ```
 
-Questo comando sincronizza i file pubblici in `dist/`, genera la pagina Foto e le gallerie dal JSON e inserisce header e footer nelle pagine, generando HTML completo. Scrive soltanto i file il cui contenuto è cambiato e rimuove quelli che non fanno più parte del sito. Non modificare direttamente `dist/`: la build gestisce tutto il suo contenuto. `public/_redirects` mantiene i vecchi indirizzi senza `.html` sugli hosting che supportano questo file e nel server di anteprima. Su altri hosting, configura i redirect equivalenti se ti servono i vecchi link.
+La directory di destinazione deve esistere e il nome del file deve essere nuovo. Imposta lo stesso `CMS_INSTANCE_PATH` del servizio anche quando esegui questo comando. Il backup include i dati già confermati nel journal SQLite; evita di copiare soltanto `site.sqlite3` a mano mentre l’applicazione è attiva.
 
-### Build più veloci e cache di Drive
+Copia anche `uploads/` e conserva la chiave delle sessioni o il valore di `SECRET_KEY`. Salva i backup fuori dalla cartella pubblica e dal repository. Per un ripristino, arresta il servizio, conserva una copia dell’istanza corrente e ripristina database e immagini nella cartella persistente prima di riavviarlo. Il backup del database non contiene le fotografie remote di Google Drive.
 
-La build usa per impostazione predefinita gli elenchi salvati in `.cache/drive/`:
+## Esecuzione in produzione
+
+Il sito richiede un processo Python persistente e un disco scrivibile. Un hosting che serve soltanto file statici non esegue il CMS.
+
+Installa le dipendenze sul server, scegli una cartella persistente e crea l’account amministratore nello stesso ambiente. Per avviare Waitress dietro il reverse proxy Nginx fornito:
 
 ```bash
-npm run build
+export CMS_INSTANCE_PATH=/var/lib/filarmonica
+export CMS_HTTPS=1
+export CMS_TRUST_PROXY=1
+.venv/bin/python -m flask --app app serve --host 127.0.0.1 --port 8080
 ```
 
-Non contatta Drive per le cartelle già presenti nella cache. Le cartelle nuove o prive di cache vengono scaricate normalmente. Le modifiche locali a testi, HTML, CSS e JSON vengono sempre applicate. **Le modifiche fatte su Drive dopo l’ultimo controllo non vengono rilevate dalla build predefinita.**
+Il comando Flask `serve` avvia Waitress; host e porta predefiniti sono `127.0.0.1:8080`. Usa un gestore di servizi per mantenerlo attivo e riavviarlo dopo il riavvio del server. Il comando `flask run` è destinato allo sviluppo locale.
 
-Per controllare gli aggiornamenti su Drive, soprattutto prima di pubblicare:
+Il file `nginx.conf` inoltra le richieste a Waitress e imposta il limite di caricamento e il timeout per la sincronizzazione. Adatta dominio e certificato e configura **HTTPS** sul proxy: il file fornito non installa un certificato e non abilita TLS automaticamente.
+
+`CMS_HTTPS=1` rende sicuri i cookie di sessione per l’uso con HTTPS. Non impostarlo nell’anteprima locale su HTTP, altrimenti il browser non invierà il cookie necessario al login.
+
+Abilita `CMS_TRUST_PROXY=1` soltanto quando Waitress è raggiungibile esclusivamente tramite il proxy controllato, come nella configurazione fornita: Nginx sovrascrive gli header dell’indirizzo client e dello schema. In questo modo il limite dei tentativi di accesso distingue i visitatori reali dietro il proxy.
+
+La cartella persistente deve sopravvivere agli aggiornamenti del codice e alle nuove distribuzioni. SQLite è adatto a questa installazione su un singolo server; non collocare istanze indipendenti su dischi effimeri aspettandoti che condividano i contenuti.
+
+La configurazione di produzione è preparata nel repository; la pubblicazione sul server e la configurazione del dominio restano operazioni da eseguire sull’hosting scelto.
+
+## Verifiche
 
 ```bash
-npm run build -- --no-cached-drive
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m flask --app app check-templates
 ```
 
-Questa opzione verifica tutte le cartelle, incluse le sottocartelle, con un massimo di sei richieste contemporanee. Aggiorna gli elenchi salvati solo quando cambiano nomi, file o sottocartelle. Una cartella condivisa da più album viene controllata una sola volta nella stessa build. Anche se la cartella principale è invariata, le sottocartelle vengono controllate per rilevare aggiunte e rimozioni.
+Il primo comando esegue i test Python dell’applicazione e della sincronizzazione Drive, inclusi avvio con database vuoto, gestione dei contenuti e conservazione dei dati ai riavvii. I test usano dati di prova isolati dal database del sito.
 
-Le pagine pubbliche di Drive non espongono un indicatore affidabile di modifica: per verificare gli aggiornamenti occorre comunque leggere gli elenchi. I file delle fotografie non vengono scaricati durante la build.
+`check-templates` compila e verifica i template Jinja; il sito rende le pagine a ogni richiesta. Come gli altri comandi Flask, inizializza il database configurato se è ancora assente.
 
-La cache è locale, esclusa da Git e dalla pubblicazione; non contiene la chiave API. Puoi cancellare `.cache/drive/` per ricostruirla. Gli errori di accesso durante un controllo interrompono la generazione prima di aggiornare `dist/`, senza usare silenziosamente dati vecchi. Il riepilogo finale mostra quante cartelle sono state verificate o lette dalla cache e quanti file sono stati aggiornati.
+Per eseguire anche il controllo facoltativo nel browser:
 
-Le precedenti credenziali in `.dev.vars` e gli archivi locali in `.wrangler/`, se presenti, non sono più usati e non vengono copiati in `dist/`.
+```bash
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m playwright install chromium
+.venv/bin/python scripts/browser_smoke.py
+```
 
-I link ricevuti che non espongono un elenco pubblico di fotografie sono conservati in `data/unavailable-folders.json` per completarli in seguito. Questo file è un promemoria e non viene usato per generare le gallerie.
+Il controllo avvia un’istanza temporanea separata dal database del sito, verifica le pagine e il percorso di gestione dal login alla pubblicazione e salva le schermate in `test-results/`. Usa Chromium già installato quando disponibile, oppure quello installato da Playwright. Per scegliere un eseguibile diverso imposta `BROWSER_PATH` con il percorso del browser.

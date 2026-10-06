@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Modifica' if record else 'Aggiungi' }} scheda{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('editorial.features') }}">← Scopri la Filarmonica</a>
+<div class="page-heading"><span class="eyebrow">Home</span><h1>{{ 'Modifica' if record else 'Aggiungi' }} scheda</h1><p class="muted">I campi contrassegnati con * sono obbligatori.</p></div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+<form method="post" class="panel edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field"><label for="eyebrow">Sopratitolo</label><input name="eyebrow" id="eyebrow" type="text" value="{{ values.get('eyebrow', '') }}"></div>
+  <div class="field"><label for="title">Titolo <span aria-hidden="true">*</span></label><input name="title" id="title" type="text" value="{{ values.get('title', '') }}" required></div>
+  <div class="field"><label for="description">Descrizione <span aria-hidden="true">*</span></label><textarea name="description" id="description" rows="4" required>{{ values.get('description', '') }}</textarea></div>
+  <div class="field">
+    <label for="url">Collegamento <span aria-hidden="true">*</span></label>
+    <input name="url" id="url" type="text" value="{{ values.get('url', '') }}" required aria-describedby="url-help">
+    <p class="help" id="url-help">Un percorso del sito, come /scuola-allievi.html, oppure un link HTTPS.</p>
+  </div>
+  <div class="field"><label for="link_label">Testo del collegamento <span aria-hidden="true">*</span></label><input name="link_label" id="link_label" type="text" value="{{ values.get('link_label', '') }}" placeholder="Scopri di più" required></div>
+  <div class="field"><label for="sort_order">Ordine</label><input name="sort_order" id="sort_order" type="number" step="1" min="-1000000" max="1000000" value="{{ values.get('sort_order', 0) }}" aria-describedby="order-help"><p class="help" id="order-help">I numeri più bassi compaiono per primi.</p></div>
+  <div class="field checkbox-field"><label for="published"><input type="checkbox" name="published" id="published" value="1" {% if values.get('published') %}checked{% endif %}> Pubblicato sul sito</label><p class="help">Se disattivato, la scheda rimane in bozza.</p></div>
+  <div class="form-actions"><button class="button" type="submit">Salva scheda</button><a class="button secondary" href="{{ url_for('editorial.features') }}">Annulla</a></div>
+</form>
+{% endblock %}

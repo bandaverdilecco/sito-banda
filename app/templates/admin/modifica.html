@@ -1,0 +1,102 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('admin.listing', section=section) }}">← {{ section_text.label }}</a>
+<div class="page-heading"><span class="eyebrow">{{ section_text.label }}</span><h1>{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}</h1><p class="muted">I campi contrassegnati con * sono obbligatori.</p></div>
+{% if error %}<div class="notice error" role="alert">{{ messaggio(error) }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="panel edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field">
+    <label for="title">Titolo <span aria-hidden="true">*</span></label>
+    <input name="title" id="title" type="text" value="{{ values.get('title', '') }}" required>
+  </div>
+  <div class="field">
+    <label for="slug">Indirizzo breve <span aria-hidden="true">*</span></label>
+    <input name="slug" id="slug" type="text" value="{{ values.get('slug', '') }}" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required aria-describedby="slug-help">
+    <p class="help" id="slug-help">Lettere minuscole, numeri e trattini. Mantienilo invariato per conservare i collegamenti.</p>
+  </div>
+  {% if section == 'eventi' %}
+  <div class="field">
+    <label for="date">Data <span aria-hidden="true">*</span></label>
+    <input name="date" id="date" type="text" value="{{ values.get('date', '') }}" required aria-describedby="date-help">
+    <p class="help" id="date-help">AAAA-MM-GG, oppure AAAA-MM se il giorno è ancora da definire.</p>
+  </div>
+  <div class="field">
+    <label for="location">Luogo <span aria-hidden="true">*</span></label>
+    <input name="location" id="location" type="text" value="{{ values.get('location', '') }}" required>
+  </div>
+  <div class="field">
+    <label for="description">Descrizione e orario</label>
+    <textarea name="description" id="description" rows="4">{{ values.get('description', '') }}</textarea>
+  </div>
+  {% elif section == 'notizie' %}
+  <div class="field">
+    <label for="date">Data <span aria-hidden="true">*</span></label>
+    <input name="date" id="date" type="text" value="{{ values.get('date', '') }}" required aria-describedby="date-help">
+    <p class="help" id="date-help">AAAA-MM-GG, oppure AAAA-MM se conosci soltanto il mese.</p>
+  </div>
+  <div class="field">
+    <label for="summary">Sommario <span aria-hidden="true">*</span></label>
+    <textarea name="summary" id="summary" rows="4" required>{{ values.get('summary', '') }}</textarea>
+  </div>
+  <div class="field">
+    <label for="body">Articolo</label>
+    <textarea name="body" id="body" rows="14" data-richtext>{{ values.get('body', '') }}</textarea>
+  </div>
+  <div class="field">
+    <label for="external_url">Link articolo esterno</label>
+    <input name="external_url" id="external_url" type="url" value="{{ values.get('external_url', '') }}" aria-describedby="external_url-help">
+    <p class="help" id="external_url-help">Lascia vuoto per scrivere una notizia su questo sito.</p>
+  </div>
+  <div class="field">
+    <label for="image">Immagine</label>
+    {% if values.get('image') %}<img class="image-preview" src="{{ values['image'] if values['image'].startswith('/') or '://' in values['image'] else '/' ~ values['image'] }}" alt="Immagine attuale">{% endif %}
+    <input name="image" id="image" value="{{ values.get('image', '') }}" placeholder="https://… oppure /assets/…">
+    <label class="upload-label" for="image_upload">Oppure carica un’immagine</label>
+    <input type="file" name="image_upload" id="image_upload" accept="image/jpeg,image/png,image/webp,image/gif">
+    <p class="help">Il file caricato sostituisce il collegamento. Formati: JPG, PNG, WebP o GIF.</p>
+  </div>
+  <div class="field">
+    <label for="image_alt">Descrizione dell’immagine</label>
+    <input name="image_alt" id="image_alt" type="text" value="{{ values.get('image_alt', '') }}">
+  </div>
+  {% elif section == 'foto' %}
+  <div class="field">
+    <label for="date">Mese e anno <span aria-hidden="true">*</span></label>
+    <input name="date" id="date" type="month" value="{{ values.get('date', '') }}" required>
+  </div>
+  <div class="field">
+    <label for="description">Descrizione / crediti</label>
+    <textarea name="description" id="description" rows="4">{{ values.get('description', '') }}</textarea>
+  </div>
+  <div class="field">
+    <label for="folder">Cartella pubblica Google Drive</label>
+    <input name="folder" id="folder" type="url" value="{{ values.get('folder', '') }}" aria-describedby="folder-help">
+    <p class="help" id="folder-help">Facoltativa: salva e usa «Sincronizza da Drive» nella gestione delle fotografie.</p>
+  </div>
+  <div class="field">
+    <label for="cover">Copertina</label>
+    {% if values.get('cover') %}<img class="image-preview" src="{{ values['cover'] if values['cover'].startswith('/') or '://' in values['cover'] else '/' ~ values['cover'] }}" alt="Immagine attuale">{% endif %}
+    <input name="cover" id="cover" value="{{ values.get('cover', '') }}" placeholder="https://… oppure /assets/…">
+    <label class="upload-label" for="cover_upload">Oppure carica un’immagine</label>
+    <input type="file" name="cover_upload" id="cover_upload" accept="image/jpeg,image/png,image/webp,image/gif">
+    <p class="help">Il file caricato sostituisce il collegamento. Formati: JPG, PNG, WebP o GIF.</p>
+  </div>
+  <div class="field">
+    <label for="cover_alt">Descrizione della copertina</label>
+    <input name="cover_alt" id="cover_alt" type="text" value="{{ values.get('cover_alt', '') }}">
+  </div>
+  <div class="field">
+    <label for="cover_position">Posizione della copertina</label>
+    <input name="cover_position" id="cover_position" type="text" value="{{ values.get('cover_position', '') }}" aria-describedby="cover_position-help">
+    <p class="help" id="cover_position-help">Posizione orizzontale e verticale: 50% 50% al centro, 50% 0% in alto; vuoto = centro.</p>
+  </div>
+  {% endif %}
+  <div class="field checkbox-field">
+    <label for="published"><input type="checkbox" name="published" id="published" value="1" {% if values.get('published') %}checked{% endif %}> Pubblicato sul sito</label>
+    <p class="help">Se disattivato, il contenuto rimane in bozza e non appare sul sito.</p>
+  </div>
+  <div class="form-actions"><button class="button" type="submit">Salva {{ 'modifiche' if record else 'contenuto' }}</button><a class="button secondary" href="{{ url_for('admin.listing', section=section) }}">Annulla</a></div>
+</form>
+{% if section == 'foto' and record %}<div class="panel next-step"><div><h2>Le foto di questo album</h2><p>Aggiungi immagini, modifica le descrizioni o sincronizza la cartella Google Drive.</p></div><a class="button secondary" href="{{ url_for('admin.photos', album_id=record.id) }}">Gestisci le foto →</a></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ album.title }} · {{ album.date|date_label }} · Fotografie{% endblock %}
+{% block description %}{{ album.title }}. {{ album.description }}{% endblock %}
+{% block head %}<script src="/gallery.js" defer></script>{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="page-hero gallery-hero">
+    <div class="container">
+      <a class="back-link" href="/foto.html#foto-{{ album.date[:4] }}">← Tutti gli album</a>
+      <span class="eyebrow">{{ album.date|date_label }}</span>
+      <h1>{{ album.title }}</h1>
+      {% if album.description %}<p>{{ album.description }}</p>{% endif %}
+    </div>
+  </section>
+  <section class="container page-body" aria-label="Fotografie dell’album">
+    {% if photos %}
+    <div class="gallery-grid">
+      {% for photo in photos %}
+      <a class="gallery-photo" href="{{ photo.src }}" data-original="{{ photo.original or photo.src }}" aria-label="Ingrandisci foto {{ loop.index }}">
+        <img src="{{ photo.thumbnail or photo.src }}" alt="{{ photo.alt or (album.title ~ ': foto ' ~ loop.index) }}" width="640" height="480" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="gallery-empty">Le fotografie saranno disponibili a breve.</p>
+    {% endif %}
+    <a class="text-link gallery-back" href="/foto.html#foto-{{ album.date[:4] }}">Tutti gli album</a>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% set archive = namespace(years=[]) %}
+{% for album in albums %}
+  {% if album.date[:4] not in archive.years %}{% set archive.years = archive.years + [album.date[:4]] %}{% endif %}
+{% endfor %}
+{% block title %}Fotografie{% endblock %}
+{% block description %}Gli album fotografici della Filarmonica Giuseppe Verdi di Lecco: concerti, feste e momenti insieme.{% endblock %}
+{% block content %}
+<main id="contenuto">
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">La Filarmonica in immagini</span>
+      <h1>Fotografie</h1>
+      <p>Concerti, feste e momenti insieme. Scegli un album per vedere le fotografie.</p>
+    </div>
+  </section>
+  {% if archive.years %}
+  <nav aria-label="Album per anno" class="section-index">
+    <div class="container section-index-inner">
+      <div class="section-index-links">
+        {% for year in archive.years %}<a href="#foto-{{ year }}">{{ year }}</a>{% endfor %}
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+  <div class="container page-body photo-archive">
+    {% for year in archive.years %}
+    <section class="album-year" id="foto-{{ year }}" aria-labelledby="titolo-{{ year }}">
+      <h2 id="titolo-{{ year }}">{{ year }}</h2>
+      <div class="album-grid">
+        {% for album in albums if album.date.startswith(year) %}
+        <article class="album-card">
+          <a class="album-link" href="/foto/{{ album.slug }}.html" aria-label="{{ album.title }}, {{ album.date|date_label }}: apri la galleria">
+            {% if album.cover %}
+            <img src="{{ album.cover }}" alt="{{ album.cover_alt or album.title }}" width="800" height="600" loading="lazy" decoding="async" referrerpolicy="no-referrer"{% if album.cover_position %} style="object-position: {{ album.cover_position }};"{% endif %} />
+            {% else %}
+            <div class="album-cover-placeholder" aria-hidden="true">Filarmonica Giuseppe Verdi</div>
+            {% endif %}
+            <div class="album-copy">
+              <span class="eyebrow">{{ album.date|date_label }}</span>
+              <h3>{{ album.title }}</h3>
+              {% if album.description %}<p class="album-location">{{ album.description }}</p>{% endif %}
+              <span class="album-open">Apri album <span aria-hidden="true">→</span></span>
+            </div>
+          </a>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% else %}
+    <p>Gli album fotografici saranno disponibili a breve.</p>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

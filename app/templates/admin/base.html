@@ -1,0 +1,53 @@
+<!doctype html>
+{% from 'admin/_messaggi.html' import messaggio %}
+{% set sections = {'eventi': {'label': 'Eventi', 'singular': 'evento'}, 'notizie': {'label': 'Notizie', 'singular': 'notizia'}, 'foto': {'label': 'Foto', 'singular': 'album'}} %}
+{% set section_text = sections.get(section, {}) %}
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Gestione sito{% endblock %} · Filarmonica Giuseppe Verdi</title>
+    <link rel="icon" href="/assets/Logo_filarmonica.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="/admin.js" defer></script>
+  </head>
+  <body class="{% if not g.current_user %}login-page{% endif %}">
+    <a class="skip-link" href="#contenuto">Vai al contenuto</a>
+    <header class="admin-header">
+      <a class="brand" href="{{ url_for('admin.index') }}">
+        <img src="/assets/Logo_filarmonica.svg" alt="" width="44" height="44">
+        <span>Filarmonica Giuseppe Verdi<small>Gestione del sito</small></span>
+      </a>
+      <div class="header-actions">
+        <a href="/">Visita il sito <span aria-hidden="true">↗</span></a>
+        {% if g.current_user %}
+          <form action="{{ url_for('admin.logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button small secondary" type="submit">Esci</button>
+          </form>
+        {% endif %}
+      </div>
+    </header>
+    {% if g.current_user %}
+      <nav class="admin-nav" aria-label="Gestione contenuti">
+        <a href="{{ url_for('admin.index') }}" {% if not section %}aria-current="page"{% endif %}>Panoramica</a>
+        {% for slug, settings in sections.items() %}
+          <a href="{{ url_for('admin.listing', section=slug) }}" {% if section == slug %}aria-current="page"{% endif %}>{{ settings.label }}</a>
+        {% endfor %}
+        <a href="{{ url_for('editorial.home') }}" {% if section == 'home' %}aria-current="page"{% endif %}>Home</a>
+        <a href="{{ url_for('editorial.features') }}" {% if section == 'musica-insieme' %}aria-current="page"{% endif %}>Scopri la Filarmonica</a>
+        <a href="{{ url_for('editorial.teachers') }}" {% if section == 'insegnanti' %}aria-current="page"{% endif %}>Insegnanti</a>
+      </nav>
+    {% endif %}
+    <main id="contenuto" class="admin-main" tabindex="-1">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="notice {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ messaggio(message) }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="admin-footer">Filarmonica Giuseppe Verdi · Lecco <span>Area riservata</span></footer>
+  </body>
+</html>
