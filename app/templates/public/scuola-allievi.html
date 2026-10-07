@@ -71,9 +71,13 @@
             {% for teacher in teachers %}
             <article class="info-group teacher-entry">
               {% if teacher.image %}
+              <a class="gallery-photo teacher-photo-link" href="{{ teacher.image }}"
+                 data-caption-name="{{ teacher.name }}" data-caption-instrument="{{ teacher.instrument }}"
+                 aria-label="Ingrandisci foto: {{ teacher.name|replace('\n', ' · ') }} — {{ teacher.instrument }}">
               <img class="teacher-photo" src="{{ teacher.image }}"
                    alt="{{ teacher.image_alt or teacher.name|replace('\n', ' ') }}"
                    {% if teacher.image_width and teacher.image_height %}width="{{ teacher.image_width }}" height="{{ teacher.image_height }}"{% endif %} loading="lazy">
+              </a>
               {% endif %}
               <div class="teacher-details">
                 <span class="eyebrow">{{ teacher.instrument }}</span>
@@ -179,3 +183,4 @@
       </section>
     </main>
 {% endblock %}
+{% block scripts %}<script src="/gallery.js" defer></script>{% endblock %}

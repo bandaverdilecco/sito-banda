@@ -133,6 +133,10 @@ class AppTests(unittest.TestCase):
             image = entry.select_one("img.teacher-photo")
             self.assertEqual((image["src"], image["alt"], image["width"], image["height"]), (src, alt, size, size))
             self.assertEqual(image["loading"], "lazy")
+            link = entry.select_one('a.gallery-photo')
+            self.assertEqual(link['href'], src)
+            self.assertEqual(link['data-caption-name'].replace('\n', ' '), names)
+            self.assertEqual(link['data-caption-instrument'], instrument)
         self.assertEqual(len(teachers[-1].select("h3.teacher-names br")), 1)
 
     def test_news_listing_uses_italian_url_and_redirects_old_listing(self):

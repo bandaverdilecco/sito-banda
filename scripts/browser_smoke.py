@@ -29,6 +29,26 @@ class QuietHandler(WSGIRequestHandler):
         pass
 
 
+def assert_caption_over_photo(viewer):
+    expect(viewer.locator('.photo-viewer-image')).to_be_visible()
+    expect(viewer.locator('.photo-viewer-caption')).to_be_visible()
+    expect(viewer.locator('.photo-viewer-caption')).to_have_css('background-color', 'rgba(25, 20, 24, 0.75)')
+    expect(viewer.locator('.photo-viewer-name')).to_have_css('text-align', 'left')
+    expect(viewer.locator('.photo-viewer-instrument')).to_have_css('text-align', 'left')
+    assert viewer.evaluate('''(el) => {
+        const img = el.querySelector('.photo-viewer-image');
+        const image = img.getBoundingClientRect();
+        const caption = el.querySelector('.photo-viewer-caption').getBoundingClientRect();
+        const name = el.querySelector('.photo-viewer-name').getBoundingClientRect();
+        const scale = Math.min(image.width / img.naturalWidth, image.height / img.naturalHeight);
+        const width = img.naturalWidth * scale;
+        const bottom = image.y + (image.height + img.naturalHeight * scale) / 2;
+        return Math.abs(caption.width - width) < 1 &&
+            Math.abs(caption.y + caption.height - bottom) < 1 &&
+            Math.abs(caption.x + caption.width / 2 - image.x - image.width / 2) < 1 &&
+            Math.abs(name.x + name.width / 2 - caption.x - caption.width / 2) < 1;
+    }'''), 'Caption band must align with the rendered photo, with equal text padding'
+
 
 
 def run():
@@ -95,6 +115,22 @@ def run():
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/notizie/\d+/edit$'))
                 page.goto(origin + '/notizie/notizia-prova-browser')
                 expect(page.locator('article')).to_contain_text('Testo dal nuovo editor visuale.')
+                page.goto(origin + '/notizie')
+                news_card = page.locator('a.news-link[href="/notizie/notizia-prova-browser"]')
+                image_frame = news_card.locator('.card-image')
+                page.mouse.move(0, 0)
+                expect(image_frame).to_have_css('transform', 'none')
+                frame_before = image_frame.bounding_box()
+                news_card.locator('h3').hover()
+                expect(image_frame).to_have_css('transform', 'matrix(1.035, 0, 0, 1.035, 0, 0)')
+                expect(news_card.locator('img')).to_have_css('transform', 'none')
+                frame_after = image_frame.bounding_box()
+                assert abs(frame_after['width'] - frame_before['width'] * 1.035) < 1
+                assert abs(frame_after['height'] - frame_before['height'] * 1.035) < 1
+                expect(image_frame).to_have_css('overflow', 'hidden')
+                page.emulate_media(reduced_motion='reduce')
+                expect(image_frame).to_have_css('transform', 'none')
+                page.emulate_media(reduced_motion='no-preference')
                 for selector in ('img', 'h3', '.news-card-copy p'):
                     page.goto(origin + '/notizie')
                     page.locator('a.news-link[href="/notizie/notizia-prova-browser"]').locator(selector).click()
@@ -159,6 +195,7 @@ def run():
                 page.get_by_label('Titolo', exact=False).fill('Album prova browser')
                 page.get_by_label('Indirizzo breve').fill('album-prova-browser')
                 page.get_by_label('Date dell’album').fill('2026-10-06, 2026-10-07')
+                page.locator('[name="cover"]').fill('/assets/concert.jpg')
                 page.get_by_role('button', name='Salva contenuto').click()
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/foto/\d+/edit$'))
                 page.get_by_role('link', name='Gestisci le foto').click()
@@ -207,9 +244,25 @@ def run():
                 page.goto(photo_edit_url)
                 page.get_by_label('Nascondi questa foto', exact=True).uncheck()
                 page.get_by_role('button', name='Salva modifiche').click()
-                page.goto(origin + '/foto/album-prova-browser')
+                page.goto(origin + '/foto')
+                album_card = page.locator('a.album-link[href="/foto/album-prova-browser"]')
+                image_frame = album_card.locator('.card-image')
+                page.mouse.move(0, 0)
+                expect(image_frame).to_have_css('transform', 'none')
+                frame_before = image_frame.bounding_box()
+                album_card.locator('h3').hover()
+                expect(image_frame).to_have_css('transform', 'matrix(1.035, 0, 0, 1.035, 0, 0)')
+                expect(album_card.locator('img')).to_have_css('transform', 'none')
+                frame_after = image_frame.bounding_box()
+                assert abs(frame_after['width'] - frame_before['width'] * 1.035) < 1
+                assert abs(frame_after['height'] - frame_before['height'] * 1.035) < 1
+                expect(image_frame).to_have_css('overflow', 'hidden')
+                album_card.click()
                 expect(page.locator('.gallery-hero .eyebrow')).to_have_text('6 - 7 ottobre 2026')
                 expect(page.locator('.gallery-photo img')).to_be_visible()
+                page.locator('.gallery-photo').hover()
+                expect(page.locator('.gallery-photo')).to_have_css('transform', 'matrix(1.035, 0, 0, 1.035, 0, 0)')
+                expect(page.locator('.gallery-photo img')).to_have_css('transform', 'none')
                 page.locator('.gallery-photo').click()
                 expect(page.locator('dialog')).to_be_visible()
                 expect(page.locator('.photo-viewer-image')).to_be_visible()
@@ -237,6 +290,52 @@ def run():
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestro browser Due')
                 expect(page.locator('.teacher-entry').first.locator('h3 br')).to_have_count(1)
                 expect(page.locator('.teacher-entry').first.locator('img')).to_be_visible()
+                teacher_photos = page.locator('.teacher-photo-link')
+                teacher_photos.first.hover()
+                expect(teacher_photos.first).to_have_css('transform', 'matrix(1.15, 0, 0, 1.15, 0, 0)')
+                teacher_photos.first.click()
+                teacher_viewer = page.get_by_role('dialog', name='Galleria fotografica')
+                expect(teacher_viewer).to_be_visible()
+                expect(teacher_viewer.locator('.photo-viewer-name')).to_have_text('Maestra browser Uno\nMaestro browser Due')
+                expect(teacher_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
+                expect(teacher_viewer.locator('.photo-viewer-image')).to_have_css('object-fit', 'contain')
+                assert_caption_over_photo(teacher_viewer)
+                page.screenshot(path=output / 'teacher-gallery-desktop.png')
+                page.get_by_role('button', name='Foto successiva', exact=True).click()
+                expect(teacher_viewer.locator('.photo-viewer-name')).to_have_text(teacher_photos.nth(1).get_attribute('data-caption-name'))
+                expect(teacher_viewer.locator('.photo-viewer-instrument')).to_have_text(teacher_photos.nth(1).get_attribute('data-caption-instrument'))
+                page.keyboard.press('ArrowLeft')
+                expect(teacher_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
+                page.keyboard.press('Escape')
+                expect(teacher_viewer).not_to_be_visible()
+                expect(teacher_photos.first).to_be_focused()
+
+                touch_context = browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True)
+                touch_page = touch_context.new_page()
+                touch_page.goto(origin + '/scuola-allievi')
+                touch_photo = touch_page.locator('.teacher-photo-link').first
+                touch_photo.scroll_into_view_if_needed()
+                touch_viewer = touch_page.get_by_role('dialog', name='Galleria fotografica')
+                expect(touch_photo).to_have_css('transform', 'none')
+                expect(touch_viewer).not_to_be_visible()
+                touch_photo.tap()
+                expect(touch_viewer).to_be_visible()
+                expect(touch_viewer.locator('.photo-viewer-name')).to_have_text('Maestra browser Uno\nMaestro browser Due')
+                expect(touch_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
+                assert_caption_over_photo(touch_viewer)
+                touch_page.screenshot(path=output / 'teacher-gallery-mobile.png')
+                touch_page.get_by_role('button', name='Foto successiva', exact=True).tap()
+                expect(touch_viewer.locator('.photo-viewer-counter')).to_have_text(f'Foto 2 di {teacher_photos.count()}')
+                assert_caption_over_photo(touch_viewer)
+                for viewport in ({'width': 320, 'height': 568}, {'width': 844, 'height': 390}):
+                    touch_page.set_viewport_size(viewport)
+                    margin = 4 if viewport['width'] <= 700 else 8
+                    touch_page.wait_for_function('(margin) => document.querySelector(".photo-viewer").clientWidth === innerWidth - 2 * margin', arg=margin)
+                    assert_caption_over_photo(touch_viewer)
+                touch_page.get_by_role('button', name='Chiudi galleria', exact=True).tap()
+                expect(touch_viewer).not_to_be_visible()
+                assert touch_page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                touch_context.close()
 
                 for section in ('eventi', 'notizie', 'foto', 'musica-insieme', 'insegnanti'):
                     page.goto(origin + '/admin/' + section)
@@ -278,6 +377,26 @@ def run():
                     assert history.evaluate('el => el.scrollWidth <= el.clientWidth')
                     columns = history.evaluate('el => getComputedStyle(el).gridTemplateColumns.split(" ").length')
                     assert columns == (3 if width == 1440 else 1)
+                    sizes = pictures.evaluate_all('(items) => items.map(el => ({width: el.clientWidth, height: el.clientHeight}))')
+                    assert max(size['height'] for size in sizes) - min(size['height'] for size in sizes) <= 1
+                    for picture in pictures.all():
+                        picture.scroll_into_view_if_needed()
+                        picture.locator('img').evaluate('(img) => img.decode()')
+                        assert picture.evaluate('''(el) => {
+                            const img = el.querySelector('img');
+                            const frame = el.getBoundingClientRect();
+                            const image = img.getBoundingClientRect();
+                            return Math.abs(frame.width - image.width) < 1 &&
+                                Math.abs(image.height - image.width * img.naturalHeight / img.naturalWidth) < 1 &&
+                                Math.abs(frame.y + frame.height / 2 - image.y - image.height / 2) < 1;
+                        }'''), 'History thumbnail must retain full width and crop vertically from the center'
+                    pictures.nth(1).hover()
+                    expect(pictures.nth(1)).to_have_css('transform', 'matrix(1.035, 0, 0, 1.035, 0, 0)')
+                    assert pictures.nth(1).evaluate('(el) => Math.abs(el.getBoundingClientRect().width - el.querySelector("img").getBoundingClientRect().width) < 1')
+                    expect(pictures.nth(1)).to_have_css('overflow', 'hidden')
+                    page.emulate_media(reduced_motion='reduce')
+                    expect(pictures.nth(1)).to_have_css('transform', 'none')
+                    page.emulate_media(reduced_motion='no-preference')
                     pictures.nth(1).click()
                     viewer = page.get_by_role('dialog', name='Galleria fotografica')
                     expect(viewer).to_be_visible()

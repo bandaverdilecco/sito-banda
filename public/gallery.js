@@ -23,6 +23,10 @@
       <img class="photo-viewer-image" alt="" referrerpolicy="no-referrer" />
       <p class="photo-viewer-status" role="status"></p>
     </div>
+    <div class="photo-viewer-caption" id="photo-viewer-caption" aria-live="polite" hidden>
+      <p class="photo-viewer-name"></p>
+      <p class="photo-viewer-instrument"></p>
+    </div>
     <div class="photo-viewer-controls">
       <button type="button" class="photo-viewer-prev" aria-label="Foto precedente">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
@@ -39,8 +43,27 @@
   const previous = viewer.querySelector(".photo-viewer-prev");
   const next = viewer.querySelector(".photo-viewer-next");
   const download = viewer.querySelector(".photo-viewer-download");
+  const caption = viewer.querySelector('.photo-viewer-caption');
+  const captionName = viewer.querySelector('.photo-viewer-name');
+  const captionInstrument = viewer.querySelector('.photo-viewer-instrument');
   let current = 0;
   previous.disabled = next.disabled = photos.length < 2;
+
+  function positionCaption() {
+    if (caption.hidden || image.hidden || !image.naturalWidth || !viewer.open) return;
+    const bounds = image.getBoundingClientRect();
+    const dialog = viewer.getBoundingClientRect();
+    const scale = Math.min(bounds.width / image.naturalWidth, bounds.height / image.naturalHeight);
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    caption.style.width = `${width}px`;
+    caption.style.maxHeight = `${height * 0.45}px`;
+    caption.style.left = `${bounds.left - dialog.left + (bounds.width - width) / 2}px`;
+    caption.style.top = `${bounds.top - dialog.top + (bounds.height + height) / 2 - caption.offsetHeight}px`;
+    caption.style.visibility = 'visible';
+  }
+  new ResizeObserver(positionCaption).observe(viewer);
+  window.addEventListener('resize', positionCaption);
 
   function showPhoto(index) {
     current = (index + photos.length) % photos.length;
@@ -48,6 +71,12 @@
     status.hidden = false;
     status.textContent = "Caricamento della foto…";
     counter.textContent = `Foto ${current + 1} di ${photos.length}`;
+    captionName.textContent = photos[current].dataset.captionName || '';
+    captionInstrument.textContent = photos[current].dataset.captionInstrument || '';
+    caption.hidden = !captionName.textContent && !captionInstrument.textContent;
+    caption.style.visibility = 'hidden';
+    if (caption.hidden) viewer.removeAttribute('aria-describedby');
+    else viewer.setAttribute('aria-describedby', caption.id);
     image.alt = photos[current].querySelector("img").alt;
     image.src = photos[current].href;
     const url = new URL(photos[current].href);
@@ -63,6 +92,7 @@
   image.addEventListener("load", () => {
     image.hidden = false;
     status.hidden = true;
+    positionCaption();
   });
   image.addEventListener("error", () => {
     image.hidden = true;
@@ -89,7 +119,7 @@
     showPhoto(current + (event.key === "ArrowRight" ? 1 : -1));
   });
   viewer.addEventListener("click", (event) => {
-    if (event.target.closest("button, a")) return;
+    if (event.target.closest("button, a, .photo-viewer-caption")) return;
     if (!image.hidden && image.naturalWidth && image.naturalHeight) {
       // object-fit: contain lascia spazio vuoto dentro il riquadro dell’immagine.
       const rect = image.getBoundingClientRect();
