@@ -59,7 +59,7 @@ class OperationsTests(unittest.TestCase):
                         self.assertEqual(db.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0], 0)
                 self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0], '1')
             client = app.test_client()
-            for path in ('/', '/prossimi-eventi.html', '/notizie.html', '/foto.html', '/admin'):
+            for path in ('/', '/prossimi-eventi', '/notizie', '/foto', '/admin'):
                 with self.subTest(path=path):
                     self.assertEqual(client.get(path).status_code, 200)
 

@@ -76,17 +76,17 @@ INSERT OR IGNORE INTO home_intro (id, eyebrow, title)
 INSERT INTO home_features (eyebrow, title, description, url, link_label, sort_order)
   SELECT 'La Filarmonica', 'Una storia, una città',
     'Dal 1809, generazioni di musicisti hanno dato voce a Lecco.',
-    '/la-filarmonica.html#storia', 'Scopri di più', 0
+    '/la-filarmonica#storia', 'Scopri di più', 0
   WHERE NOT EXISTS (SELECT 1 FROM metadata WHERE key='editable_sections_initialized');
 INSERT INTO home_features (eyebrow, title, description, url, link_label, sort_order)
   SELECT 'Scuola allievi', 'La musica comincia qui',
     'Lezioni di strumento, propedeutica e Junior Band per crescere insieme.',
-    '/scuola-allievi.html#info-e-costi', 'Scopri di più', 1
+    '/scuola-allievi#info-e-costi', 'Scopri di più', 1
   WHERE NOT EXISTS (SELECT 1 FROM metadata WHERE key='editable_sections_initialized');
 INSERT INTO home_features (eyebrow, title, description, url, link_label, sort_order)
   SELECT 'Partecipa', 'Sostieni la musica',
     'Aiutaci a portare avanti concerti, scuola e vita associativa.',
-    '/sostienici.html', 'Scopri di più', 2
+    '/sostienici', 'Scopri di più', 2
   WHERE NOT EXISTS (SELECT 1 FROM metadata WHERE key='editable_sections_initialized');
 INSERT INTO teachers (name, instrument, image, image_alt, image_width, image_height, sort_order)
   SELECT 'Emanuela Milani', 'Flauto', '/assets/emanuela-milani.jpg', 'Emanuela Milani', 894, 894, 0

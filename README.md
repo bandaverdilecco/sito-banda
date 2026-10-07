@@ -60,7 +60,9 @@ Le aree dei contenuti permettono di aggiungere, modificare ed eliminare le sched
 
 Dopo il salvataggio rimani nel modulo di modifica, con un messaggio di conferma. Anche un nuovo contenuto si apre nel proprio modulo, così puoi continuare a modificarlo senza crearne una copia. Per un album, usa **Gestisci le foto** per passare alle fotografie.
 
-L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/notizie/concerto-autunno.html` e `/foto/concerto-autunno.html`. Mantienilo invariato quando un collegamento è già stato condiviso.
+L’**indirizzo breve** deve essere univoco nell’area e usare lettere minuscole, numeri e trattini. Per le notizie e gli album diventa parte dell’URL, per esempio `/notizie/concerto-autunno` e `/foto/concerto-autunno`. Mantienilo invariato quando un collegamento è già stato condiviso.
+
+Gli indirizzi pubblici non hanno estensione `.html`; la home è `/`. I vecchi indirizzi vengono reindirizzati automaticamente, conservando i parametri e i collegamenti alle sezioni. I template sul disco mantengono l’estensione `.html`.
 
 Per eventi e notizie puoi indicare una data completa `AAAA-MM-GG` oppure soltanto mese e anno `AAAA-MM`. Anche gli album accettano entrambi i formati e possono avere più date separate da virgole, per esempio `2026-10-06, 2026-10-07`. Le date vengono ordinate e i duplicati rimossi; la prima data determina l’ordinamento e l’anno dell’album nell’archivio. Tutte le date compaiono nella scheda e nella galleria. Gli album esistenti con solo mese e anno restano validi.
 

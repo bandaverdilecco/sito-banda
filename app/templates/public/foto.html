@@ -30,7 +30,7 @@
       <div class="album-grid">
         {% for album in albums if album.date.startswith(year) %}
         <article class="album-card">
-          <a class="album-link" href="/foto/{{ album.slug }}.html" aria-label="{{ album.title }}, {{ album.date|date_label }}: apri la galleria">
+          <a class="album-link" href="/foto/{{ album.slug }}" aria-label="{{ album.title }}, {{ album.date|date_label }}: apri la galleria">
             {% if album.cover %}
             <img src="{{ album.cover }}" alt="{{ album.cover_alt or album.title }}" width="800" height="600" loading="lazy" decoding="async" referrerpolicy="no-referrer"{% if album.cover_position %} style="object-position: {{ album.cover_position }};"{% endif %} />
             {% else %}

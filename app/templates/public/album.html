@@ -6,7 +6,7 @@
 <main id="contenuto">
   <section class="page-hero gallery-hero">
     <div class="container">
-      <a class="back-link" href="/foto.html#foto-{{ album.date[:4] }}">← Tutti gli album</a>
+      <a class="back-link" href="/foto#foto-{{ album.date[:4] }}">← Tutti gli album</a>
       <span class="eyebrow">{{ album.date|date_label }}</span>
       <h1>{{ album.title }}</h1>
       {% if album.description %}<p>{{ album.description }}</p>{% endif %}
@@ -24,7 +24,7 @@
     {% else %}
     <p class="gallery-empty">Le fotografie saranno disponibili a breve.</p>
     {% endif %}
-    <a class="text-link gallery-back" href="/foto.html#foto-{{ album.date[:4] }}">Tutti gli album</a>
+    <a class="text-link gallery-back" href="/foto#foto-{{ album.date[:4] }}">Tutti gli album</a>
   </section>
 </main>
 {% endblock %}

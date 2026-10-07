@@ -12,7 +12,7 @@
   <div class="field">
     <label for="url">Collegamento <span aria-hidden="true">*</span></label>
     <input name="url" id="url" type="text" value="{{ values.get('url', '') }}" required aria-describedby="url-help">
-    <p class="help" id="url-help">Un percorso del sito, come /scuola-allievi.html, oppure un link HTTPS.</p>
+    <p class="help" id="url-help">Un percorso del sito, come /scuola-allievi, oppure un link HTTPS.</p>
   </div>
   <div class="field"><label for="link_label">Testo del collegamento <span aria-hidden="true">*</span></label><input name="link_label" id="link_label" type="text" value="{{ values.get('link_label', '') }}" placeholder="Scopri di più" required></div>
   <div class="form-actions"><button class="button" type="submit">Salva scheda</button><a class="button secondary" href="{{ url_for('editorial.features') }}">Annulla</a></div>

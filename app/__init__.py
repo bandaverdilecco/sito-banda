@@ -6,10 +6,12 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
 import click
-from flask import Flask, abort, redirect, render_template, request, send_from_directory, url_for
+from bs4 import BeautifulSoup
+from flask import Flask, abort, redirect, render_template, request, send_from_directory
 from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.security import generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -93,7 +95,6 @@ def create_app(test_config=None):
     )
 
     @app.get('/')
-    @app.get('/index.html')
     def home():
         today = datetime.now(ZoneInfo('Europe/Rome')).date().isoformat()
         db = get_db()
@@ -103,38 +104,33 @@ def create_app(test_config=None):
         return render_template('public/index.html', events=events, latest_news=latest,
                                home_intro=intro, home_features=features)
 
-    @app.get('/scuola-allievi.html')
+    @app.get('/scuola-allievi')
     def school():
         teachers = get_db().execute('SELECT * FROM teachers WHERE published=1 ORDER BY sort_order,id').fetchall()
         return render_template('public/scuola-allievi.html', teachers=teachers)
 
-    @app.get('/prossimi-eventi.html')
+    @app.get('/prossimi-eventi')
     def events():
         return render_template('public/eventi.html', events=get_db().execute('SELECT * FROM events WHERE published=1 ORDER BY date,id').fetchall())
 
-    @app.get('/notizie.html')
+    @app.get('/notizie')
     def news():
         return render_template('public/notizie.html', news=get_db().execute('SELECT * FROM news WHERE published=1 ORDER BY date DESC,id').fetchall())
 
-    @app.get('/blog/<slug>.html')
-    @app.get('/blog/<slug>')
-    def legacy_article(slug):
-        return redirect(url_for('article', slug=slug), code=301)
-
-    @app.get('/notizie/<slug>.html')
+    @app.get('/notizie/<slug>')
     def article(slug):
         row = get_db().execute('SELECT * FROM news WHERE slug=? AND published=1', (slug,)).fetchone()
         if row is None:
             abort(404)
         return render_template('public/articolo.html', article=row)
 
-    @app.get('/foto.html')
+    @app.get('/foto')
     def photos():
         return render_template('public/foto.html', albums=get_db().execute(
             "SELECT * FROM albums WHERE published=1 ORDER BY substr(date,1,instr(date || ',',',')-1) DESC,id"
         ).fetchall())
 
-    @app.get('/foto/<slug>.html')
+    @app.get('/foto/<slug>')
     def album(slug):
         row = get_db().execute('SELECT * FROM albums WHERE slug=? AND published=1', (slug,)).fetchone()
         if row is None:
@@ -143,7 +139,7 @@ def create_app(test_config=None):
         return render_template('public/album.html', album=row, photos=images)
 
     for page in ('contatti', 'sostienici', 'la-filarmonica'):
-        app.add_url_rule(f'/{page}.html', page, lambda page=page: render_template(f'public/{page}.html'))
+        app.add_url_rule(f'/{page}', page, lambda page=page: render_template(f'public/{page}.html'))
 
     @app.get('/assets/<path:filename>')
     def asset(filename):
@@ -168,10 +164,40 @@ def create_app(test_config=None):
             source, target, *_ = line.split()
             redirects[source] = target
 
+    def public_url(value):
+        """Normalize local public links, leaving external URLs and assets untouched."""
+        try:
+            parts = urlsplit(value)
+        except ValueError:
+            return value
+        if parts.scheme or parts.netloc:
+            return value
+        path = parts.path.rstrip('/')
+        target = redirects.get(path)
+        if not target and path.startswith('/blog/'):
+            target = '/notizie/' + path.removeprefix('/blog/').removesuffix('.html')
+        if not target and path.startswith(('/notizie/', '/foto/')) and path.endswith('.html'):
+            target = path[:-5]
+        if not target:
+            return value
+        destination = urlsplit(target)
+        return urlunsplit(('', '', destination.path, parts.query, parts.fragment or destination.fragment))
+
+    def public_body(value):
+        body = BeautifulSoup(value, 'html.parser')
+        for link in body.find_all('a', href=True):
+            link['href'] = public_url(link['href'])
+        return str(body)
+
+    app.jinja_env.filters.update(public_url=public_url, public_body=public_body)
+
     @app.before_request
     def legacy_redirect():
-        target = redirects.get(request.path.rstrip('/'))
-        if target:
+        target = public_url(request.path)
+        if target != request.path:
+            if request.query_string:
+                parts = urlsplit(target)
+                target = urlunsplit(parts._replace(query=request.query_string.decode('latin-1')))
             return redirect(target, code=301)
 
     @app.after_request

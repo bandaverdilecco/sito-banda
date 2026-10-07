@@ -1,23 +1,23 @@
 {% set navigation = [
-  ('/index.html', 'Home'),
-  ('/la-filarmonica.html', 'La Filarmonica'),
-  ('/scuola-allievi.html', 'Scuola allievi'),
-  ('/prossimi-eventi.html', 'Eventi'),
-  ('/notizie.html', 'Notizie'),
-  ('/foto.html', 'Foto'),
-  ('/sostienici.html', 'Sostienici'),
-  ('/contatti.html', 'Contatti')
+  ('/', 'Home'),
+  ('/la-filarmonica', 'La Filarmonica'),
+  ('/scuola-allievi', 'Scuola allievi'),
+  ('/prossimi-eventi', 'Eventi'),
+  ('/notizie', 'Notizie'),
+  ('/foto', 'Foto'),
+  ('/sostienici', 'Sostienici'),
+  ('/contatti', 'Contatti')
 ] %}
 {% macro navigation_links() %}
   {% for href, label in navigation %}
-    {% set current = request.path == href or (href == '/index.html' and request.path == '/') %}
-    {% set ancestor = (href == '/notizie.html' and request.path.startswith('/notizie/')) or (href == '/foto.html' and request.path.startswith('/foto/')) %}
+    {% set current = request.path == href %}
+    {% set ancestor = (href == '/notizie' and request.path.startswith('/notizie/')) or (href == '/foto' and request.path.startswith('/foto/')) %}
     <a href="{{ href }}"{% if current %} aria-current="page"{% elif ancestor %} aria-current="true"{% endif %}>{{ label }}</a>
   {% endfor %}
 {% endmacro %}
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="/index.html">
+    <a class="brand" href="/">
       <img class="brand-logo" src="/assets/Logo_filarmonica.svg" alt="Filarmonica Giuseppe Verdi" width="49" height="49" />
       <span>FILARMONICA<br />GIUSEPPE VERDI</span>
     </a>

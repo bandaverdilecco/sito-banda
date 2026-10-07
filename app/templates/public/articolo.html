@@ -11,12 +11,12 @@
     </div>
   </section>
   <section class="container page-body">
-    <a class="back-link" href="/notizie.html">Torna alle notizie</a>
+    <a class="back-link" href="/notizie">Torna alle notizie</a>
     <article class="prose">
       {% if article.image %}
       <img class="page-image" alt="{{ article.image_alt or article.title }}" src="{{ article.image }}" width="1200" height="800" loading="lazy" />
       {% endif %}
-      {{ article.body|safe }}
+      {{ article.body|public_body|safe }}
     </article>
   </section>
 </main>

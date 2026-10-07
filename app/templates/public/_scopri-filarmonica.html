@@ -9,7 +9,7 @@
     </div>
     <div class="feature-grid">
       {% for feature in home_features %}
-      <a class="feature-card" href="{{ feature.url }}">
+      <a class="feature-card" href="{{ feature.url|public_url }}">
         <small>{{ feature.eyebrow }}</small>
         <h3>{{ feature.title }}</h3>
         <p>{{ feature.description }}</p>

@@ -73,7 +73,7 @@ class EditorialTests(unittest.TestCase):
         self.login()
         for section, table, data, public, selector, field in (
             ('musica-insieme', 'home_features', self.feature_data(), '/', '.feature-card h3', 'title'),
-            ('insegnanti', 'teachers', self.teacher_data(), '/scuola-allievi.html', '.teacher-entry h3', 'name'),
+            ('insegnanti', 'teachers', self.teacher_data(), '/scuola-allievi', '.teacher-entry h3', 'name'),
         ):
             with self.subTest(section=section):
                 listing = f'/admin/{section}'
@@ -140,7 +140,7 @@ class EditorialTests(unittest.TestCase):
     @staticmethod
     def feature_data():
         return dict(eyebrow="Partecipa", title="Musica per tutti", description="Una nuova iniziativa.",
-                    url="/contatti.html", link_label="Scrivici", sort_order="-1", published="1")
+                    url="/contatti", link_label="Scrivici", sort_order="-1", published="1")
 
     @staticmethod
     def teacher_data():
@@ -306,7 +306,7 @@ class EditorialTests(unittest.TestCase):
         record = self.rows("SELECT * FROM teachers WHERE name=?", (values["name"],))[0]
         path = f"/admin/insegnanti/{record['id']}"
         self.assertEqual(response.location, path + '/edit')
-        card = self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1]
+        card = self.soup(self.client.get("/scuola-allievi")).select(".teacher-entry")[-1]
         self.assertEqual(card.h3.get_text(" ", strip=True), "Maestra Uno Maestro Due")
         self.assertEqual(len(card.h3.select("br")), 1)
         self.assertEqual(card.select_one(".eyebrow").get_text(), "Violino")
@@ -314,20 +314,20 @@ class EditorialTests(unittest.TestCase):
         values.update(name="Maestra aggiornata", instrument="Pianoforte", sort_order="99")
         response = self.submit(path + "/edit", values)
         self.assertEqual(response.location, path + '/edit')
-        self.assertEqual(self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1].h3.get_text(), values["name"])
+        self.assertEqual(self.soup(self.client.get("/scuola-allievi")).select(".teacher-entry")[-1].h3.get_text(), values["name"])
         values.pop("published")
         self.submit(path + '/publication', {'hidden': '1'}, token_page='/admin/insegnanti')
         self.submit(path + "/edit", values)
-        self.assertNotIn(values["name"], self.client.get("/scuola-allievi.html").get_data(as_text=True))
+        self.assertNotIn(values["name"], self.client.get("/scuola-allievi").get_data(as_text=True))
         values["published"] = "1"
         self.submit(path + '/publication', token_page='/admin/insegnanti')
         self.submit(path + "/edit", values)
-        self.assertIn(values["name"], self.client.get("/scuola-allievi.html").get_data(as_text=True))
+        self.assertIn(values["name"], self.client.get("/scuola-allievi").get_data(as_text=True))
         self.assertEqual(self.client.get(path + "/delete").status_code, 200)
         self.assertTrue(self.rows("SELECT * FROM teachers WHERE id=?", (record["id"],)))
         self.submit(path + "/delete")
         self.assertEqual(self.rows("SELECT * FROM teachers WHERE id=?", (record["id"],)), [])
-        self.assertNotIn(values["name"], self.client.get("/scuola-allievi.html").get_data(as_text=True))
+        self.assertNotIn(values["name"], self.client.get("/scuola-allievi").get_data(as_text=True))
         self.assertEqual(self.client.get(path + "/edit").status_code, 404)
 
     def test_new_section_fields_validate_before_saving_and_escape_plain_text(self):
@@ -357,7 +357,7 @@ class EditorialTests(unittest.TestCase):
         teacher = self.teacher_data()
         teacher.update(name="<strong>Maestra</strong>", image_alt='La maestra "in concerto"')
         self.submit("/admin/insegnanti/new", teacher)
-        card = self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")[-1]
+        card = self.soup(self.client.get("/scuola-allievi")).select(".teacher-entry")[-1]
         self.assertEqual(card.h3.get_text(), teacher["name"])
         self.assertIsNone(card.h3.strong)
         self.assertEqual(card.img["alt"], teacher["image_alt"])
@@ -381,7 +381,7 @@ class EditorialTests(unittest.TestCase):
         self.assertEqual(self.rows("SELECT * FROM teachers WHERE id=?", (record["id"],))[0], record)
         values.update(name="Insegnante senza foto", image="")
         self.submit("/admin/insegnanti/new", values)
-        card = next(card for card in self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry")
+        card = next(card for card in self.soup(self.client.get("/scuola-allievi")).select(".teacher-entry")
                     if card.h3.get_text() == values["name"])
         self.assertIsNone(card.img)
 
@@ -400,7 +400,7 @@ class EditorialTests(unittest.TestCase):
             self.assertEqual(self.rows("SELECT * FROM events"), original_events)
             self.assertEqual(self.rows("SELECT title,eyebrow FROM home_intro"), [{"title": "Una nuova storia", "eyebrow": "Insieme"}])
             self.assertFalse(self.soup(self.client.get("/")).select(".feature-card"))
-            self.assertFalse(self.soup(self.client.get("/scuola-allievi.html")).select(".teacher-entry"))
+            self.assertFalse(self.soup(self.client.get("/scuola-allievi")).select(".teacher-entry"))
 
 
 if __name__ == "__main__":

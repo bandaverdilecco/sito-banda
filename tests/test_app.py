@@ -20,8 +20,8 @@ from app.drive import DriveError
 
 TABLES = {"eventi": "events", "notizie": "news", "foto": "albums"}
 PUBLIC_PAGES = {
-    "eventi": "/prossimi-eventi.html",
-    "notizie": "/notizie.html", "foto": "/foto.html",
+    "eventi": "/prossimi-eventi",
+    "notizie": "/notizie", "foto": "/foto",
 }
 
 
@@ -139,25 +139,60 @@ class AppTests(unittest.TestCase):
         for path in ('/blog.html', '/blog', '/archivio-notizie'):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 301)
-            self.assertEqual(response.location, '/notizie.html')
+            self.assertEqual(response.location, '/notizie')
         for path in ('/blog/notizia-prova.html', '/blog/notizia-prova'):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 301)
-            self.assertEqual(response.location, '/notizie/notizia-prova.html')
-        for path in ('/', '/notizie.html', '/notizie/notizia-prova.html'):
+            self.assertEqual(response.location, '/notizie/notizia-prova')
+        for path in ('/', '/notizie', '/notizie/notizia-prova'):
             page = self.soup(self.client.get(path))
-            self.assertIsNone(page.select_one('a[href="/blog.html"]'))
-            self.assertIsNotNone(page.select_one('a[href="/notizie.html"]'))
+            self.assertIsNone(page.select_one('a[href="/blog"]'))
+            self.assertIsNotNone(page.select_one('a[href="/notizie"]'))
+
+    def test_extensionless_urls_and_legacy_redirects_preserve_queries(self):
+        pages = ('la-filarmonica', 'scuola-allievi', 'prossimi-eventi', 'notizie', 'foto', 'sostienici', 'contatti')
+        pairs = [('/index.html', '/'), *[(f'/{page}.html', f'/{page}') for page in pages],
+                 ('/notizie/notizia-prova.html', '/notizie/notizia-prova'),
+                 ('/foto/album-prova.html', '/foto/album-prova'),
+                 ('/blog/notizia-prova.html', '/notizie/notizia-prova')]
+        for old, new in pairs:
+            with self.subTest(old=old):
+                response = self.client.get(old + '?source=archive&label=a%20b')
+                self.assertEqual(response.status_code, 301)
+                self.assertEqual(response.location, new + '?source=archive&label=a%20b')
+                self.assertEqual(self.client.get(response.location).status_code, 200)
+        response = self.client.get('/chi-siamo-storia.html?source=archive')
+        self.assertEqual(response.location, '/la-filarmonica?source=archive#storia')
+        self.assertEqual(self.client.get('/unknown.html').status_code, 404)
+
+    def test_saved_legacy_links_render_extensionless_without_changing_storage(self):
+        body = ('<p><a href="/foto/album-prova.html?source=news#foto">Album</a>'
+                '<a href="https://example.com/page.html">External</a></p>')
+        with self.app.app_context():
+            db = get_db()
+            db.execute('UPDATE home_features SET url=? WHERE id=1', ('/scuola-allievi.html#maestri',))
+            db.execute('UPDATE news SET body=? WHERE id=1', (body,))
+            db.commit()
+        page = self.soup(self.client.get('/'))
+        self.assertEqual(page.select_one('.feature-card')['href'], '/scuola-allievi#maestri')
+        page = self.soup(self.client.get('/notizie/notizia-prova'))
+        self.assertEqual([link['href'] for link in page.select('.prose a')],
+                         ['/foto/album-prova?source=news#foto', 'https://example.com/page.html'])
+        self.assertEqual(self.row('news', 1)['body'], body)
+        self.assertEqual(self.row('home_features', 1)['url'], '/scuola-allievi.html#maestri')
+        normalise = self.app.jinja_env.filters['public_url']
+        for unchanged in ('/assets/photo.jpg', '/uploads/photo.webp', 'https://example.com/page.html', '/admin', '#storia'):
+            self.assertEqual(normalise(unchanged), unchanged)
 
     def test_public_pages_preserve_content_navigation_and_hide_admin(self):
         expected = {
-            "/": "Filarmonica", "/index.html": "Filarmonica",
-            "/la-filarmonica.html": "Una storia iniziata nel 1809",
-            "/scuola-allievi.html": "Emanuela Milani",
-            "/prossimi-eventi.html": "Concerto di prova",
-            "/notizie.html": "Notizia di prova",
-            "/foto.html": "Fotografie", "/sostienici.html": "IT53Z0306909606100000150858",
-            "/contatti.html": "bandaverdilecco@libero.it",
+            "/": "Filarmonica",
+            "/la-filarmonica": "Una storia iniziata nel 1809",
+            "/scuola-allievi": "Emanuela Milani",
+            "/prossimi-eventi": "Concerto di prova",
+            "/notizie": "Notizia di prova",
+            "/foto": "Fotografie", "/sostienici": "IT53Z0306909606100000150858",
+            "/contatti": "bandaverdilecco@libero.it",
         }
         for path, text in expected.items():
             with self.subTest(path=path):
@@ -170,29 +205,30 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(len(page.select(".main-nav a")), 8)
                 self.assertTrue(page.select('.main-nav a[aria-current="page"]'))
                 self.assertFalse(page.select('a[href^="/admin"]'))
+                self.assertFalse(page.select('a[href^="/"][href*=".html"]'))
                 for element in page.select("a[href], img[src], script[src], link[href]"):
                     value = element.get("href", element.get("src"))
                     self.assertTrue(value.startswith(("/", "#", "https:", "mailto:", "tel:")), value)
         self.assertEqual(self.client.get("/pagina-inesistente").status_code, 404)
 
     def test_existing_school_teachers_are_preserved_and_can_be_managed(self):
-        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi.html")))
+        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi")))
         self.assertEqual(len(self.rows("SELECT * FROM teachers")), 6)
         dashboard = self.soup(self.login())
         self.assertTrue(dashboard.select('a[href="/admin/insegnanti"]'))
         for suffix in ("", "/new", "/1/edit", "/1/delete"):
             with self.subTest(suffix=suffix):
                 self.assertEqual(self.client.get("/admin/insegnanti" + suffix).status_code, 200)
-        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi.html")))
+        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi")))
 
     def test_news_and_album_urls_and_galleries_render_database_content(self):
         articles = self.rows("SELECT * FROM news ORDER BY id")
-        current_news = self.soup(self.client.get("/notizie.html"))
+        current_news = self.soup(self.client.get("/notizie"))
         current_links = {link["href"] for link in current_news.select(".news-list a")}
         self.assertEqual(len(articles), 2)
         self.assertEqual(sum(bool(article["external_url"]) for article in articles), 1)
         for article in articles:
-            expected = article["external_url"] or f"/notizie/{article['slug']}.html"
+            expected = article["external_url"] or f"/notizie/{article['slug']}"
             self.assertIn(expected, current_links)
             if not article["external_url"]:
                 response = self.client.get(expected)
@@ -200,16 +236,16 @@ class AppTests(unittest.TestCase):
                 page = self.soup(response)
                 self.assertEqual(page.h1.get_text(), article["title"])
                 self.assertEqual(len(page.select("article.prose img.page-image")), 1)
-                self.assertTrue(page.select('.main-nav a[href="/notizie.html"][aria-current="true"]'))
+                self.assertTrue(page.select('.main-nav a[href="/notizie"][aria-current="true"]'))
         albums = self.rows("SELECT * FROM albums ORDER BY id")
         total_photos = 0
         for album in albums:
-            response = self.client.get(f"/foto/{album['slug']}.html")
+            response = self.client.get(f"/foto/{album['slug']}")
             self.assertEqual(response.status_code, 200, album["slug"])
             page = self.soup(response)
             self.assertEqual(page.h1.get_text(), album["title"])
             self.assertTrue(page.select('script[src="/gallery.js"]'))
-            self.assertTrue(page.select('.main-nav a[href="/foto.html"][aria-current="true"]'))
+            self.assertTrue(page.select('.main-nav a[href="/foto"][aria-current="true"]'))
             images = page.select("a.gallery-photo")
             photos = self.rows("SELECT * FROM photos WHERE album_id=? ORDER BY sort_order,id", (album["id"],))
             self.assertEqual(len(images), len(photos), album["slug"])
@@ -224,7 +260,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(total_photos, 2)
 
     def test_news_cards_link_images_and_copy_and_album_cards_omit_open_label(self):
-        for path in ('/notizie.html', '/'):
+        for path in ('/notizie', '/'):
             page = self.soup(self.client.get(path))
             links = page.select('.news-list .news-link, .news-card .news-link')
             self.assertTrue(links)
@@ -240,7 +276,7 @@ class AppTests(unittest.TestCase):
                     self.assertIn('noopener', link['rel'])
                 else:
                     self.assertTrue(link['href'].startswith('/notizie/'))
-        archive = self.soup(self.client.get('/foto.html'))
+        archive = self.soup(self.client.get('/foto'))
         self.assertTrue(archive.select('.album-link'))
         self.assertFalse(archive.select('.album-open'))
         self.assertNotIn('Apri album', archive.get_text())
@@ -430,7 +466,7 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(self.row(table, record["id"])["published"], 0)
                 self.assertNotIn(original_title, self.client.get(public).get_data(as_text=True))
                 if section in ("notizie", "foto"):
-                    detail = f"/{'notizie' if section == 'notizie' else 'foto'}/{data['slug']}.html"
+                    detail = f"/{'notizie' if section == 'notizie' else 'foto'}/{data['slug']}"
                     self.assertEqual(self.client.get(detail).status_code, 404)
                 data["published"] = "1"
                 self.submit(path + '/publication', token_page=f'/admin/{section}')
@@ -448,12 +484,12 @@ class AppTests(unittest.TestCase):
     def test_normal_rich_article_and_external_source_are_displayed(self):
         self.login()
         article, data = self.create_content("notizie")
-        page = self.soup(self.client.get(f"/notizie/{article['slug']}.html"))
+        page = self.soup(self.client.get(f"/notizie/{article['slug']}"))
         self.assertEqual(page.select_one("article.prose h2").get_text(), "Il programma")
         self.assertEqual(page.select_one("article.prose strong").get_text(), "per tutti")
         data.update(external_url="https://example.com/notizia", body="")
         self.submit(f"/admin/notizie/{article['id']}/edit", data)
-        for path in ("/", "/notizie.html"):
+        for path in ("/", "/notizie"):
             self.assertTrue(self.soup(self.client.get(path)).select('a[href="https://example.com/notizia"]'))
 
     def test_invalid_dates_duplicate_slugs_and_incomplete_forms_leave_records_unchanged(self):
@@ -484,17 +520,17 @@ class AppTests(unittest.TestCase):
                 self.submit('/admin/foto/new', data)
                 album = self.rows('SELECT * FROM albums WHERE slug=?', (data['slug'],))[0]
                 self.assertEqual(album['date'], stored)
-                public = self.soup(self.client.get(f"/foto/{album['slug']}.html"))
+                public = self.soup(self.client.get(f"/foto/{album['slug']}"))
                 self.assertEqual(public.select_one('.gallery-hero .eyebrow').get_text(), label)
                 self.assertIn(label, public.title.get_text())
-                archive = self.soup(self.client.get('/foto.html'))
-                card = archive.select_one(f'a[href="/foto/{album["slug"]}.html"]')
+                archive = self.soup(self.client.get('/foto'))
+                card = archive.select_one(f'a[href="/foto/{album["slug"]}"]')
                 self.assertEqual(card.select_one('.eyebrow').get_text(), label)
                 self.assertEqual(card.find_parent('section')['id'], 'foto-' + stored[:4])
                 edit = self.soup(self.client.get(f'/admin/foto/{album["id"]}/edit'))
                 self.assertEqual(edit.select_one('[name="date"]')['value'], stored)
         restarted = create_app(self.config).test_client()
-        self.assertIn('Luglio - 2 agosto 2040', restarted.get(f"/foto/{album['slug']}.html").get_data(as_text=True))
+        self.assertIn('Luglio - 2 agosto 2040', restarted.get(f"/foto/{album['slug']}").get_data(as_text=True))
 
     def test_invalid_album_date_lists_leave_saved_album_unchanged(self):
         self.login()
@@ -517,15 +553,15 @@ class AppTests(unittest.TestCase):
         self.login()
         for suffix, dates in (('single', '2040-06-01'), ('multiple', '2040-06-01, 2041-01-01'), ('later', '2040-07')):
             self.submit('/admin/foto/new', dict(self.content_data('foto', suffix), date=dates))
-        archive = self.soup(self.client.get('/foto.html'))
+        archive = self.soup(self.client.get('/foto'))
         links = [card['href'] for card in archive.select('#foto-2040 .album-link')]
-        self.assertEqual(links, ['/foto/prova-foto-later.html', '/foto/prova-foto-single.html', '/foto/prova-foto-multiple.html'])
+        self.assertEqual(links, ['/foto/prova-foto-later', '/foto/prova-foto-single', '/foto/prova-foto-multiple'])
 
     def test_single_album_photo_can_be_hidden_and_restored_without_deletion(self):
         self.login()
         album, _ = self.create_content('foto', 'visibility')
         gallery = f'/admin/foto/{album["id"]}/photos'
-        public = f'/foto/{album["slug"]}.html'
+        public = f'/foto/{album["slug"]}'
         self.submit(gallery, {'src': '/assets/concert.jpg', 'alt': 'Foto da nascondere'})
         self.submit(gallery, {'src': '/assets/varenna.jpg', 'alt': 'Foto visibile'})
         photo = self.rows('SELECT * FROM photos WHERE album_id=? ORDER BY id', (album['id'],))[0]
@@ -568,7 +604,7 @@ class AppTests(unittest.TestCase):
                 'image': url, 'image_alt': 'Ritratto', 'sort_order': '0', 'published': '1',
             })
             self.assertTrue(self.rows('SELECT * FROM teachers WHERE image=?', (expected,)))
-            self.assertIsNotNone(self.soup(self.client.get('/scuola-allievi.html')).find('img', src=expected))
+            self.assertIsNotNone(self.soup(self.client.get('/scuola-allievi')).find('img', src=expected))
 
     def test_inline_photo_visibility_saves_only_visibility_and_stays_in_album(self):
         self.login()
@@ -611,7 +647,7 @@ class AppTests(unittest.TestCase):
         gallery = f'/admin/foto/{album["id"]}/photos'
         self.submit(gallery, {'src': '/assets/concert.jpg', 'hidden': '1'})
         self.assertEqual(self.rows('SELECT published FROM photos WHERE album_id=?', (album['id'],)), [{'published': 0}])
-        page = self.soup(self.client.get(f'/foto/{album["slug"]}.html'))
+        page = self.soup(self.client.get(f'/foto/{album["slug"]}'))
         self.assertFalse(page.select('.gallery-photo'))
         self.assertTrue(page.select('.gallery-empty'))
 
@@ -633,7 +669,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(uploaded.size, (16, 12))
         response.close()
         self.submit(gallery, {"src": "/assets/concert.jpg", "alt": "Prima foto", "sort_order": "-1"})
-        public = f"/foto/{album['slug']}.html"
+        public = f"/foto/{album['slug']}"
         page = self.soup(self.client.get(public))
         self.assertEqual([p.img["alt"] for p in page.select(".gallery-photo")], ["Foto caricata", "Prima foto"])
         response = self.submit(f"{gallery}/{photo['id']}/edit", {"src": photo["src"], "alt": "Descrizione aggiornata", "sort_order": "-2"})
@@ -674,7 +710,7 @@ class AppTests(unittest.TestCase):
         self.submit(f"/admin/notizie/{article['id']}/edit", values)
         saved = self.row("news", article["id"])
         self.assertRegex(saved["image"], r"^/uploads/[0-9a-f]{40}\.webp$")
-        public = self.soup(self.client.get(f"/notizie/{article['slug']}.html"))
+        public = self.soup(self.client.get(f"/notizie/{article['slug']}"))
         self.assertEqual(public.select_one("img.page-image")["src"], saved["image"])
 
     def test_photo_position_is_automatic_and_edit_does_not_reorder(self):
@@ -778,7 +814,7 @@ class AppTests(unittest.TestCase):
             with self.assertLogs(self.app.logger, level="WARNING"):
                 self.submit(f"/admin/foto/{album['id']}/sync", token_page=gallery)
         self.assertEqual(self.rows("SELECT * FROM photos WHERE album_id=? ORDER BY id", (album["id"],)), before)
-        self.assertEqual(len(self.soup(self.client.get(f"/foto/{album['slug']}.html")).select(".gallery-photo")), 2)
+        self.assertEqual(len(self.soup(self.client.get(f"/foto/{album['slug']}")).select(".gallery-photo")), 2)
 
     def test_empty_sections_still_render_public_pages(self):
         with self.app.app_context():
@@ -786,11 +822,11 @@ class AppTests(unittest.TestCase):
             for table in TABLES.values():
                 db.execute(f"DELETE FROM {table}")
             db.commit()
-        for path in ("/", "/scuola-allievi.html", *PUBLIC_PAGES.values()):
+        for path in ("/", "/scuola-allievi", *PUBLIC_PAGES.values()):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertTrue(self.soup(response).select_one("main").get_text(strip=True))
-        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi.html")))
+        self.assert_original_teachers(self.soup(self.client.get("/scuola-allievi")))
 
 
 if __name__ == "__main__":

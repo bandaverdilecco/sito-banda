@@ -81,7 +81,7 @@ def run():
                 expect(page).to_have_url(saved_event_url)
                 page.reload()
                 expect(page).to_have_url(saved_event_url)
-                page.goto(origin + '/prossimi-eventi.html')
+                page.goto(origin + '/prossimi-eventi')
                 expect(page.locator('main')).to_contain_text('Evento prova browser')
 
                 page.goto(origin + '/admin/notizie/new')
@@ -93,12 +93,12 @@ def run():
                 page.locator('.editor-content').fill('Testo dal nuovo editor visuale.')
                 page.get_by_role('button', name='Salva contenuto').click()
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/notizie/\d+/edit$'))
-                page.goto(origin + '/notizie/notizia-prova-browser.html')
+                page.goto(origin + '/notizie/notizia-prova-browser')
                 expect(page.locator('article')).to_contain_text('Testo dal nuovo editor visuale.')
                 for selector in ('img', 'h3', '.news-card-copy p'):
-                    page.goto(origin + '/notizie.html')
-                    page.locator('a.news-link[href="/notizie/notizia-prova-browser.html"]').locator(selector).click()
-                    expect(page).to_have_url(origin + '/notizie/notizia-prova-browser.html')
+                    page.goto(origin + '/notizie')
+                    page.locator('a.news-link[href="/notizie/notizia-prova-browser"]').locator(selector).click()
+                    expect(page).to_have_url(origin + '/notizie/notizia-prova-browser')
 
                 page.goto(origin + '/admin/notizie/new')
                 page.get_by_label('Titolo', exact=False).fill('Notizia archivio browser')
@@ -124,7 +124,7 @@ def run():
                 page.get_by_label('Sopratitolo', exact=True).fill('La comunità')
                 page.locator('[name="title"]').fill('Scheda prova browser')
                 page.get_by_label('Descrizione', exact=False).fill('Una nuova scheda gestita dal browser.')
-                page.locator('[name="url"]').fill('/contatti.html')
+                page.locator('[name="url"]').fill('/contatti')
                 page.get_by_label('Testo del collegamento', exact=False).fill('Contattaci')
                 page.get_by_role('button', name='Salva scheda').click()
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/musica-insieme/\d+/edit$'))
@@ -153,7 +153,7 @@ def run():
                 page.goto(origin)
                 expect(page.get_by_role('heading', name='Musica insieme, dalla home')).to_be_visible()
                 expect(page.locator('.feature-card').first).to_contain_text('Scheda prova browser')
-                expect(page.locator('.feature-card').first).to_have_attribute('href', '/contatti.html')
+                expect(page.locator('.feature-card').first).to_have_attribute('href', '/contatti')
 
                 page.goto(origin + '/admin/foto/new')
                 page.get_by_label('Titolo', exact=False).fill('Album prova browser')
@@ -201,13 +201,13 @@ def run():
                 page.get_by_role('button', name='Salva modifiche').click()
                 expect(page).to_have_url(photo_edit_url)
                 expect(page.get_by_label('Nascondi questa foto', exact=True)).to_be_checked()
-                page.goto(origin + '/foto/album-prova-browser.html')
+                page.goto(origin + '/foto/album-prova-browser')
                 expect(page.locator('.gallery-photo')).to_have_count(0)
                 expect(page.locator('.gallery-empty')).to_be_visible()
                 page.goto(photo_edit_url)
                 page.get_by_label('Nascondi questa foto', exact=True).uncheck()
                 page.get_by_role('button', name='Salva modifiche').click()
-                page.goto(origin + '/foto/album-prova-browser.html')
+                page.goto(origin + '/foto/album-prova-browser')
                 expect(page.locator('.gallery-hero .eyebrow')).to_have_text('6 - 7 ottobre 2026')
                 expect(page.locator('.gallery-photo img')).to_be_visible()
                 page.locator('.gallery-photo').click()
@@ -232,7 +232,7 @@ def run():
                     expect(page.locator('.content-list')).to_have_attribute('aria-busy', 'false')
                     assert page.evaluate('window.orderPageMarker === true'), 'Ordering reloaded the page'
                 expect(page.locator('.content-row').first).to_contain_text('Maestra browser Uno')
-                page.goto(origin + '/scuola-allievi.html')
+                page.goto(origin + '/scuola-allievi')
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestra browser Uno')
                 expect(page.locator('.teacher-entry').first).to_contain_text('Maestro browser Due')
                 expect(page.locator('.teacher-entry').first.locator('h3 br')).to_have_count(1)
@@ -271,7 +271,7 @@ def run():
 
                 for width in (1440, 390, 320):
                     page.set_viewport_size({'width': width, 'height': 900})
-                    page.goto(origin + '/la-filarmonica.html', wait_until='domcontentloaded')
+                    page.goto(origin + '/la-filarmonica', wait_until='domcontentloaded')
                     history = page.locator('.history-photos')
                     pictures = history.locator('.gallery-photo')
                     expect(pictures).to_have_count(3)
@@ -301,7 +301,7 @@ def run():
                     history.screenshot(path=output / f'history-gallery-{width}.png')
 
                 page.set_viewport_size({'width': 390, 'height': 844})
-                for path in ('/', '/scuola-allievi.html', '/admin', '/admin/notizie/new',
+                for path in ('/', '/scuola-allievi', '/admin', '/admin/notizie/new',
                              '/admin/home', '/admin/musica-insieme', '/admin/musica-insieme/new',
                              '/admin/insegnanti', '/admin/insegnanti/new', photo_page.removeprefix(origin)):
                     page.goto(origin + path, wait_until='domcontentloaded')
