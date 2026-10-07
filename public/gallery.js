@@ -59,11 +59,15 @@
     caption.style.width = `${width}px`;
     caption.style.maxHeight = `${height * 0.45}px`;
     caption.style.left = `${bounds.left - dialog.left + (bounds.width - width) / 2}px`;
-    caption.style.top = `${bounds.top - dialog.top + (bounds.height + height) / 2 - caption.offsetHeight}px`;
+    // Anchor the lower edge directly: mobile text resizing must not move the band.
+    caption.style.bottom = `${dialog.bottom - bounds.top - (bounds.height + height) / 2}px`;
     caption.style.visibility = 'visible';
   }
-  new ResizeObserver(positionCaption).observe(viewer);
+  const captionObserver = new ResizeObserver(positionCaption);
+  captionObserver.observe(viewer);
+  captionObserver.observe(image);
   window.addEventListener('resize', positionCaption);
+  window.visualViewport?.addEventListener('resize', positionCaption);
 
   function showPhoto(index) {
     current = (index + photos.length) % photos.length;

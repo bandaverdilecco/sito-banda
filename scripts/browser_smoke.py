@@ -334,6 +334,12 @@ def run():
                 expect(touch_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
                 assert_caption_over_photo(touch_viewer)
                 touch_page.screenshot(path=output / 'teacher-gallery-mobile.png')
+                # Mobile text enlargement can change the caption after image load.
+                touch_name = touch_viewer.locator('.photo-viewer-name')
+                touch_name.evaluate("el => el.style.fontSize = '28px'")
+                assert_caption_over_photo(touch_viewer)
+                touch_name.evaluate("el => el.style.removeProperty('font-size')")
+                assert_caption_over_photo(touch_viewer)
                 touch_page.get_by_role('button', name='Foto successiva', exact=True).tap()
                 expect(touch_viewer.locator('.photo-viewer-counter')).to_have_text(f'Foto 2 di {teacher_photos.count()}')
                 assert_caption_over_photo(touch_viewer)
@@ -429,6 +435,35 @@ def run():
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                     history.screenshot(path=output / f'history-gallery-{width}.png')
 
+                page.emulate_media(reduced_motion='reduce')
+                for width in (1440, 390):
+                    page.set_viewport_size({'width': width, 'height': 844})
+                    for path in ('/la-filarmonica', '/scuola-allievi', '/foto', '/notizie'):
+                        page.goto(origin + path)
+                        links = page.locator('.section-index a')
+                        for link in links.all():
+                            link.click()
+                            page.wait_for_function('''() => {
+                                const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+                                const section = target.matches('.content-block');
+                                const anchor = section ? target : target.querySelector('.eyebrow, h2');
+                                const desired = document.querySelector('.section-index').getBoundingClientRect().height + (section ? 0 : 24);
+                                const top = anchor.getBoundingClientRect().top;
+                                const maximum = document.documentElement.scrollHeight - innerHeight;
+                                const expectedScroll = Math.max(0, Math.min(maximum, scrollY + top - desired));
+                                return Math.abs(scrollY - expectedScroll) < 1;
+                            }''')
+                        if links.count():
+                            page.reload()
+                            assert page.locator('.section-index').evaluate('el => Math.abs(el.getBoundingClientRect().top) < 1')
+                            section_target = page.locator('.content-block[tabindex="-1"]:target')
+                            if section_target.count():
+                                section_target.focus()
+                                expect(section_target).to_have_css('outline-style', 'none')
+                                page.keyboard.press('Tab')
+                                links.first.focus()
+                                expect(links.first).to_have_css('outline-style', 'solid')
+                page.emulate_media(reduced_motion='no-preference')
                 page.set_viewport_size({'width': 390, 'height': 844})
                 for path in ('/', '/scuola-allievi', '/admin', '/admin/notizie/new',
                              '/admin/home', '/admin/musica-insieme', '/admin/musica-insieme/new',
@@ -440,6 +475,10 @@ def run():
                         assert actions.evaluate('(element) => element.scrollWidth <= element.clientWidth'), 'Photo actions clipped on mobile'
                     if path == '/admin':
                         expect(page.locator('.dashboard-card')).to_have_count(6)
+                        expect(page.get_by_role('link', name='Visita il sito')).to_be_visible()
+                        visit_box = page.get_by_role('link', name='Visita il sito').bounding_box()
+                        logout_box = page.get_by_role('button', name='Esci', exact=True).bounding_box()
+                        assert visit_box['y'] > logout_box['y'] + logout_box['height']
                         page.screenshot(path=output / 'admin-mobile.png', full_page=True)
                     if path == '/':
                         page.screenshot(path=output / 'home-mobile.png', full_page=True)

@@ -861,8 +861,14 @@ input[type="number"] {
   .brand small {
     font-size: 8px;
   }
+  .header-actions {
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   .header-actions > a {
-    display: none;
+    white-space: nowrap;
   }
   .admin-nav {
     padding: 0 20px;

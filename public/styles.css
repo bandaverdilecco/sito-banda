@@ -904,7 +904,11 @@ body.gallery-open {
   text-underline-offset: 4px;
 }
 .content-block {
-  scroll-margin-top: calc(-1 * var(--section-inset, 0px));
+  /* Preserve section padding; align its upper edge with the sticky index. */
+  scroll-margin-top: -24px;
+}
+.content-block[tabindex="-1"]:focus {
+  outline: none;
 }
 .block-split {
   display: grid;
