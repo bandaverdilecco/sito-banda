@@ -158,6 +158,10 @@ img {
   text-decoration: none;
 }
 .admin-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--surface);
   padding: 0 max(24px, calc((100vw - 1240px) / 2));
   display: flex;
   gap: 32px;
