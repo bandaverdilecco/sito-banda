@@ -798,6 +798,43 @@ class AppTests(unittest.TestCase):
             self.assertIn(title, self.client.get(PUBLIC_PAGES[section]).get_data(as_text=True))
             self.assertEqual(self.client.get(f"/admin/{section}/{record['id']}/edit").status_code, 200)
 
+    def test_new_album_syncs_drive_photos_only_on_creation(self):
+        self.login()
+        data = self.content_data("foto")
+        data["folder"] = "https://drive.google.com/drive/folders/example-folder"
+        with patch("app.content.read_drive_folder", return_value=[{"id": "first"}, {"id": "second"}]) as sync:
+            response = self.submit("/admin/foto/new", data)
+            sync.assert_called_once()
+            album = self.rows("SELECT * FROM albums WHERE slug=?", (data["slug"],))[0]
+            self.assertEqual(response.location, f"/admin/foto/{album['id']}/edit")
+            photos = self.rows("SELECT * FROM photos WHERE album_id=?", (album["id"],))
+            self.assertEqual(len(photos), 2)
+            self.assertTrue(all(photo["source"] == "drive" for photo in photos))
+            self.assertIn("Sincronizzazione completata: 2 foto", self.client.get(response.location).get_data(as_text=True))
+            self.submit(response.location, data)
+            sync.assert_called_once()
+
+    def test_new_album_without_folder_or_invalid_data_does_not_sync(self):
+        self.login()
+        with patch("app.content.sync_album") as sync:
+            self.create_content("foto")
+            data = self.content_data("foto", "invalid")
+            data.update(title="", folder="https://drive.google.com/drive/folders/example-folder")
+            self.submit("/admin/foto/new", data, expected=422)
+            sync.assert_not_called()
+
+    def test_new_album_is_saved_when_initial_drive_sync_fails(self):
+        self.login()
+        data = self.content_data("foto")
+        data["folder"] = "https://drive.google.com/drive/folders/example-folder"
+        with patch("app.content.read_drive_folder", side_effect=DriveError("Unavailable")):
+            with self.assertLogs(self.app.logger, level="WARNING"):
+                response = self.submit("/admin/foto/new", data)
+        album = self.rows("SELECT * FROM albums WHERE slug=?", (data["slug"],))[0]
+        self.assertEqual(response.location, f"/admin/foto/{album['id']}/edit")
+        self.assertEqual(self.rows("SELECT * FROM photos WHERE album_id=?", (album["id"],)), [])
+        self.assertIn("Album creato, ma le foto non sono state sincronizzate.", self.client.get(response.location).get_data(as_text=True))
+
     def test_drive_sync_preserves_uploads_and_existing_gallery_on_unavailable_source(self):
         self.login()
         album, data = self.create_content("foto")

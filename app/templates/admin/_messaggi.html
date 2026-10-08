@@ -36,6 +36,7 @@
   {% elif code == 'photo_duplicate' %}Fotografia già presente nell’album o album non trovato.
   {% elif code == 'drive_folder_required' %}Salva prima il collegamento alla cartella Google Drive.
   {% elif code == 'drive_sync_failed' %}Sincronizzazione non riuscita. Verifica che la cartella sia pubblica e riprova; le fotografie precedenti sono conservate.
+  {% elif code == 'album_created_sync_failed' %}Album creato, ma le foto non sono state sincronizzate. Verifica che la cartella sia pubblica e riprova con «Sincronizza da Drive» in «Gestisci le foto».
   {% elif code == 'sync_complete' %}Sincronizzazione completata: {{ value.count }} foto importate o aggiornate.
   {% elif code == 'field_too_long' %}
     {% set labels = {'title': 'Titolo', 'slug': 'Indirizzo breve', 'date': 'Data', 'location': 'Luogo', 'description': 'Descrizione', 'summary': 'Sommario', 'body': 'Articolo', 'external_url': 'Link articolo esterno', 'image': 'Immagine', 'image_alt': 'Descrizione dell’immagine', 'folder': 'Cartella pubblica Google Drive', 'cover': 'Copertina', 'cover_alt': 'Descrizione della copertina', 'cover_position': 'Posizione della copertina', 'eyebrow': 'Sopratitolo', 'url': 'Collegamento', 'link_label': 'Testo del collegamento', 'name': 'Nome', 'instrument': 'Strumento'} %}

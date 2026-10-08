@@ -167,6 +167,13 @@ def edit(section, item_id=None):
             error = exc.args[0]
         else:
             flash("content_saved" if existing else "content_added", "success")
+            if section == "foto" and existing is None and data.get("folder"):
+                try:
+                    count = content.sync_album(saved_id)
+                except ValueError:
+                    flash("album_created_sync_failed", "error")
+                else:
+                    flash({"code": "sync_complete", "count": count}, "success")
             return redirect(url_for("admin.edit", section=section, item_id=saved_id))
     return render_template("admin/modifica.html", section=section, record=existing,
                            values=values, error=error), (422 if error else 200)
