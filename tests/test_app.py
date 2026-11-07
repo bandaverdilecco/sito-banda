@@ -612,6 +612,35 @@ class AppTests(unittest.TestCase):
             self.assertTrue(self.rows('SELECT * FROM teachers WHERE image=?', (expected,)))
             self.assertIsNotNone(self.soup(self.client.get('/scuola-allievi')).find('img', src=expected))
 
+    def test_photo_can_become_cover_without_changing_visibility(self):
+        self.login()
+        photo = self.rows('SELECT * FROM photos ORDER BY id')[0]
+        gallery = f'/admin/foto/{photo["album_id"]}/photos'
+        endpoint = f'{gallery}/{photo["id"]}/cover'
+        with self.app.app_context():
+            db = get_db()
+            db.execute("UPDATE albums SET cover='/assets/other.jpg',cover_zoom=2,cover_position='20% 30%' WHERE id=?", (photo['album_id'],))
+            db.commit()
+        response = self.client.post(endpoint, data={'csrf_token': self.csrf(gallery), 'hidden': '1'}, headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {'photo_id': photo['id']})
+        album = self.row('albums', photo['album_id'])
+        self.assertEqual((album['cover'], album['cover_alt'], album['cover_zoom'], album['cover_position']),
+                         (photo['src'], photo['alt'], 1, ''))
+        self.assertEqual(self.row('photos', photo['id']), photo)
+        self.assertEqual(self.submit(endpoint, token_page=gallery).location, gallery + f'#photo-{photo["id"]}')
+
+    def test_photo_cover_requires_authentication_csrf_and_correct_album(self):
+        photo = self.rows('SELECT * FROM photos ORDER BY id')[0]
+        gallery = f'/admin/foto/{photo["album_id"]}/photos'
+        endpoint = f'{gallery}/{photo["id"]}/cover'
+        self.assertEqual(self.submit(endpoint, token_page='/admin').location.rstrip('/'), '/admin')
+        self.login()
+        self.assertEqual(self.client.post(endpoint).status_code, 400)
+        other = self.rows('SELECT id FROM albums WHERE id!=?', (photo['album_id'],))[0]['id']
+        self.assertEqual(self.client.post(f'/admin/foto/{other}/photos/{photo["id"]}/cover',
+                        data={'csrf_token': self.csrf(gallery)}).status_code, 404)
+
     def test_inline_photo_visibility_saves_only_visibility_and_stays_in_album(self):
         self.login()
         photo = self.rows('SELECT * FROM photos ORDER BY id')[0]
@@ -823,6 +852,43 @@ class AppTests(unittest.TestCase):
             init_db()
             self.assertEqual([tuple(row) for row in db.execute('SELECT id,cover_position FROM albums')], before)
             self.assertTrue(all(row[0] == 1 for row in db.execute('SELECT cover_zoom FROM albums')))
+
+    def test_crop_fields_for_news_teachers_and_photos(self):
+        self.login()
+        crop = {'image_position': '20% 30%', 'image_zoom': '2'}
+        news = dict(self.content_data('notizie', 'crop'), **crop)
+        for bad in ('nan', '0', '11', 'invalid'):
+            self.submit('/admin/notizie/new', dict(news, image_zoom=bad), expected=422)
+        self.submit('/admin/notizie/new', news)
+        article = self.rows('SELECT * FROM news WHERE slug=?', (news['slug'],))[0]
+        self.assertEqual((article['image_position'], article['image_zoom']), ('20% 30%', 2))
+        self.assertIn('--crop-zoom: 2.0', self.client.get('/notizie/' + news['slug']).get_data(as_text=True))
+        teacher = dict(name='Crop teacher', instrument='Flauto', image='/assets/concert.jpg', image_alt='Ritratto', **crop)
+        self.submit('/admin/insegnanti/new', dict(teacher, image_position='bad'), expected=422)
+        self.submit('/admin/insegnanti/new', teacher)
+        saved_teacher = self.rows("SELECT * FROM teachers WHERE name='Crop teacher'")[0]
+        self.assertEqual(saved_teacher['image_zoom'], 2)
+        self.assertIn('--crop-zoom: 2.0', self.client.get('/scuola-allievi').get_data(as_text=True))
+        photo = self.rows('SELECT * FROM photos ORDER BY id')[0]
+        path = f'/admin/foto/{photo["album_id"]}/photos/{photo["id"]}/edit'
+        self.submit(path, dict(src=photo['src'], alt=photo['alt'], **crop))
+        saved_photo = self.row('photos', photo['id'])
+        self.assertEqual((saved_photo['image_position'], saved_photo['image_zoom']), ('20% 30%', 2))
+        self.assertEqual(saved_photo['original'], photo['original'])
+        self.assertEqual(saved_photo['src'], photo['src'])
+
+    def test_crop_migration_preserves_existing_images(self):
+        from app.db import init_db
+        with self.app.app_context():
+            db = get_db()
+            for table in ('news', 'teachers', 'photos'):
+                db.execute(f'ALTER TABLE {table} DROP COLUMN image_position')
+                db.execute(f'ALTER TABLE {table} DROP COLUMN image_zoom')
+            db.commit()
+            init_db()
+            init_db()
+            for table in ('news', 'teachers', 'photos'):
+                self.assertTrue(all(tuple(row) == ('', 1) for row in db.execute(f'SELECT image_position,image_zoom FROM {table}')))
 
     def test_new_album_syncs_drive_photos_only_on_creation(self):
         self.login()

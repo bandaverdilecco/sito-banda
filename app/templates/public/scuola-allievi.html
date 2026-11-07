@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_stile-ritaglio.html' import stile_ritaglio %}
 {% block title %}Scuola allievi{% endblock %}
 {% block description %}Corsi, insegnanti e progetti per cominciare a suonare insieme.{% endblock %}
 {% block content %}
@@ -74,7 +75,7 @@
               <a class="gallery-photo teacher-photo-link" href="{{ teacher.image }}"
                  data-caption-name="{{ teacher.name }}" data-caption-instrument="{{ teacher.instrument }}"
                  aria-label="Ingrandisci foto: {{ teacher.name|replace('\n', ' · ') }} — {{ teacher.instrument }}">
-              <img class="teacher-photo" src="{{ teacher.image }}"
+              <img class="teacher-photo cropped-image" style="{{ stile_ritaglio(teacher) }}" src="{{ teacher.image }}"
                    alt="{{ teacher.image_alt or teacher.name|replace('\n', ' ') }}"
                    {% if teacher.image_width and teacher.image_height %}width="{{ teacher.image_width }}" height="{{ teacher.image_height }}"{% endif %} loading="lazy">
               </a>

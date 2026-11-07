@@ -1,0 +1,22 @@
+{% macro ritaglio(values, source='image', upload='image_upload', prefix='image', ratio='1.6', formato='16:10', circle=false) %}
+<div class="field">
+  <span id="{{ prefix }}-position-label">Inquadratura dell’immagine</span>
+  <input name="{{ prefix }}_position" id="{{ prefix }}_position" type="hidden" value="{{ values.get(prefix ~ '_position', '') }}">
+  <input name="{{ prefix }}_zoom" id="{{ prefix }}_zoom" type="hidden" value="{{ values.get(prefix ~ '_zoom', 1) }}">
+  <p class="help" id="{{ prefix }}_position-help">Trascina {{ 'il cerchio' if circle else 'il rettangolo' }} e ridimensionalo dagli angoli. {{ 'Ritratto circolare' if circle else 'Formato fisso ' ~ formato }}. Tastiera: frecce per spostarlo, + e − per ridimensionarlo.</p>
+  <div data-cover-crop data-source="{{ source }}" data-upload="{{ upload }}" data-prefix="{{ prefix }}" data-ratio="{{ ratio }}"{% if circle %} class="circular-crop"{% endif %}>
+    <div class="cover-crop" role="group" tabindex="0" aria-labelledby="{{ prefix }}-position-label" aria-describedby="{{ prefix }}_position-help" hidden>
+      <img alt="Anteprima del ritaglio" draggable="false" referrerpolicy="no-referrer">
+      <div class="crop-selection">
+        <span data-corner="nw"></span><span data-corner="ne"></span>
+        <span data-corner="sw"></span><span data-corner="se"></span>
+      </div>
+    </div>
+    <p class="help" data-crop-empty>Seleziona un’immagine per vedere l’anteprima.</p>
+    <p class="help" data-crop-loading role="status" hidden>Caricamento dell’anteprima…</p>
+    <p class="help" data-crop-error role="status" hidden>Anteprima non disponibile. Controlla il collegamento o scegli un’altra immagine.</p>
+    <button class="button small secondary" type="button" data-crop-center hidden>Ripristina ritaglio</button>
+  </div>
+  <noscript><p class="help">Attiva JavaScript per modificare l’inquadratura.</p></noscript>
+</div>
+{% endmacro %}

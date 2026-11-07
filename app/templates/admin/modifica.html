@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+{% from 'admin/_ritaglio.html' import ritaglio %}
 {% block title %}{{ 'Modifica' if record else 'Aggiungi' }} {{ section_text.singular|lower }}{% endblock %}
 {% block content %}
 <a class="back-link" href="{{ url_for('admin.listing', section=section) }}">← {{ section_text.label }}</a>
@@ -53,7 +54,6 @@
   </div>
   <div class="field">
     <label for="image">Immagine</label>
-    {% if values.get('image') %}<img class="image-preview" src="{{ values['image'] if values['image'].startswith('/') or '://' in values['image'] else '/' ~ values['image'] }}" alt="Immagine attuale">{% endif %}
     <input name="image" id="image" value="{{ values.get('image', '') }}" placeholder="https://… oppure /assets/…">
     <p class="help">Link HTTPS (anche Google Drive) o percorso locale /assets/… o /uploads/….</p>
     <label class="upload-label" for="image_upload">Oppure carica un’immagine</label>
@@ -64,6 +64,7 @@
     <label for="image_alt">Descrizione dell’immagine</label>
     <input name="image_alt" id="image_alt" type="text" value="{{ values.get('image_alt', '') }}">
   </div>
+  {{ ritaglio(values) }}
   {% elif section == 'foto' %}
   <div class="field">
     <label for="date">Date dell’album <span aria-hidden="true">*</span></label>
@@ -91,26 +92,7 @@
     <label for="cover_alt">Descrizione della copertina</label>
     <input name="cover_alt" id="cover_alt" type="text" value="{{ values.get('cover_alt', '') }}">
   </div>
-  <div class="field">
-    <span id="cover-position-label">Inquadratura della copertina</span>
-    <input name="cover_position" id="cover_position" type="hidden" value="{{ values.get('cover_position', '') }}">
-    <input name="cover_zoom" id="cover_zoom" type="hidden" value="{{ values.get('cover_zoom', 1) }}">
-    <p class="help" id="cover_position-help">Trascina il rettangolo e ridimensionalo dagli angoli. Formato fisso 4:3. Tastiera: frecce per spostarlo, + e − per ridimensionarlo.</p>
-    <div data-cover-crop>
-      <div class="cover-crop" role="group" tabindex="0" aria-labelledby="cover-position-label" aria-describedby="cover_position-help" hidden>
-        <img alt="Anteprima della copertina" draggable="false" referrerpolicy="no-referrer">
-        <div class="crop-selection">
-          <span data-corner="nw"></span><span data-corner="ne"></span>
-          <span data-corner="sw"></span><span data-corner="se"></span>
-        </div>
-      </div>
-      <p class="help" data-crop-empty>Seleziona un’immagine per vedere l’anteprima.</p>
-      <p class="help" data-crop-loading role="status" hidden>Caricamento dell’anteprima…</p>
-      <p class="help" data-crop-error role="status" hidden>Anteprima non disponibile. Controlla il collegamento o scegli un’altra immagine.</p>
-      <button class="button small secondary" type="button" data-crop-center hidden>Ripristina ritaglio</button>
-    </div>
-    <noscript><p class="help">Attiva JavaScript per modificare l’inquadratura.</p></noscript>
-  </div>
+  {{ ritaglio(values, source='cover', upload='cover_upload', prefix='cover', ratio='1.3333333333333333', formato='4:3') }}
   {% endif %}
   <div class="form-actions"><button class="button" type="submit">Salva {{ 'modifiche' if record else 'contenuto' }}</button><a class="button secondary" href="{{ url_for('admin.listing', section=section) }}">Annulla</a></div>
 </form>

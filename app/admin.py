@@ -278,6 +278,22 @@ def photo_visibility(album_id, photo_id):
     return redirect(url_for('admin.photos', album_id=album_id, _anchor=f'photo-{photo_id}'))
 
 
+@bp.post('/foto/<int:album_id>/photos/<int:photo_id>/cover')
+@login_required
+def photo_cover(album_id, photo_id):
+    album = _record('foto', album_id)
+    photo = _photo(album_id, photo_id)
+    same_cover = album['cover'] == photo['src']
+    db = get_db()
+    with db:
+        db.execute('UPDATE albums SET cover=?, cover_alt=?, cover_position=?, cover_zoom=? WHERE id=?',
+                   (photo['src'], photo['alt'], album['cover_position'] if same_cover else photo['image_position'],
+                    album['cover_zoom'] if same_cover else photo['image_zoom'], album_id))
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify(photo_id=photo_id)
+    return redirect(url_for('admin.photos', album_id=album_id, _anchor=f'photo-{photo_id}'))
+
+
 @bp.route("/foto/<int:album_id>/photos/<int:photo_id>/delete", methods=["GET", "POST"])
 @login_required
 def delete_photo(album_id, photo_id):

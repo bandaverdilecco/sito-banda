@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_stile-ritaglio.html' import stile_ritaglio %}
 {% block title %}{{ album.title }} · {{ album.date|date_label }} · Fotografie{% endblock %}
 {% block description %}{{ album.title }}. {{ album.description }}{% endblock %}
 {% block head %}<script src="/gallery.js" defer></script>{% endblock %}
@@ -17,7 +18,7 @@
     <div class="gallery-grid">
       {% for photo in photos %}
       <a class="gallery-photo" href="{{ photo.src }}" data-original="{{ photo.original or photo.src }}" aria-label="Ingrandisci foto {{ loop.index }}">
-        <img src="{{ photo.thumbnail or photo.src }}" alt="{{ photo.alt or (album.title ~ ': foto ' ~ loop.index) }}" width="640" height="480" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+        <img class="cropped-image" style="{{ stile_ritaglio(photo) }}" src="{{ photo.thumbnail or photo.src }}" alt="{{ photo.alt or (album.title ~ ': foto ' ~ loop.index) }}" width="640" height="480" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       </a>
       {% endfor %}
     </div>

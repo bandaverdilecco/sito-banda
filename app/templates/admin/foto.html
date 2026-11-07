@@ -1,5 +1,10 @@
 {% extends "admin/base.html" %}
+{% from '_stile-ritaglio.html' import stile_ritaglio %}
 {% block title %}Foto · {{ album.title }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/gallery.css">
+<script src="/gallery.js" defer></script>
+{% endblock %}
 {% block content %}
 <a class="back-link" href="{{ url_for('admin.listing', section='foto') }}">← Album fotografici</a>
 <div class="page-heading with-actions"><div><span class="eyebrow">Foto dell’album</span><h1>{{ album.title }}</h1><p class="muted">{{ photos|length }} foto · {{ 'Album pubblicato' if album.published else 'Album in bozza' }}</p></div><a class="button secondary" href="{{ url_for('admin.edit', section='foto', item_id=album.id) }}">Modifica album</a></div>
@@ -15,7 +20,9 @@
       {% for photo in photos %}
       <article class="photo-card{% if not photo.published %} is-hidden{% endif %}" id="photo-{{ photo.id }}">
         {% set preview = photo.thumbnail or photo.src %}
-        <img src="{{ preview if preview.startswith('/') or '://' in preview else '/' ~ preview }}" alt="{{ photo.alt }}" loading="lazy">
+        <a class="gallery-photo" href="{{ photo.src if photo.src.startswith('/') or '://' in photo.src else '/' ~ photo.src }}" data-original="{{ photo.original or photo.src }}" aria-label="Ingrandisci foto {{ loop.index }}">
+          <img class="cropped-image" style="{{ stile_ritaglio(photo) }}" src="{{ preview if preview.startswith('/') or '://' in preview else '/' ~ preview }}" alt="{{ photo.alt }}" loading="lazy" referrerpolicy="no-referrer">
+        </a>
         <div class="photo-card-body">
           <p>{{ photo.alt or 'Senza descrizione' }}</p>
           <form method="post" action="{{ url_for('admin.photo_visibility', album_id=album.id, photo_id=photo.id) }}" class="photo-visibility" data-photo-visibility>
@@ -24,9 +31,14 @@
               <a href="{{ url_for('admin.edit_photo', album_id=album.id, photo_id=photo.id) }}">Modifica</a>
               <a class="danger-link" href="{{ url_for('admin.delete_photo', album_id=album.id, photo_id=photo.id) }}">Elimina<span class="sr-only"> foto {{ loop.index }}</span></a>
               <label for="hidden-{{ photo.id }}"><input type="checkbox" id="hidden-{{ photo.id }}" name="hidden" value="1" {% if not photo.published %}checked{% endif %}> Nascondi<span class="sr-only"> foto {{ loop.index }}: {{ photo.alt }}</span></label>
+              <button type="submit" form="cover-{{ photo.id }}" class="photo-cover-button" data-cover-button aria-pressed="{{ 'true' if album.cover == photo.src else 'false' }}">Copertina</button>
             </div>
             <button type="submit" class="button small secondary">Salva visibilità</button>
             <span class="help" role="alert" data-visibility-error hidden>Salvataggio non riuscito. Riprova.</span>
+          </form>
+          <form id="cover-{{ photo.id }}" method="post" action="{{ url_for('admin.photo_cover', album_id=album.id, photo_id=photo.id) }}" data-photo-cover data-photo-id="{{ photo.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <span class="help" role="alert" data-cover-error hidden>Copertina non aggiornata. Riprova.</span>
           </form>
         </div>
       </article>

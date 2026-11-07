@@ -9,7 +9,7 @@
   <article{% if featured %} class="news-card"{% endif %}>
     <a class="news-link" href="{{ article.external_url or ('/notizie/' ~ article.slug) }}" aria-label="{{ article.title }}"{% if article.external_url %} target="_blank" rel="noopener noreferrer"{% endif %}>
     {% if article.image %}
-    <span class="card-image"><img src="{{ article.image }}" alt="{{ article.image_alt or article.title }}" width="1200" height="800" loading="lazy" /></span>
+    <span class="card-image{% if article.image_position or article.image_zoom > 1 %} has-crop{% endif %}"><img class="cropped-image" style="{{ stile_ritaglio(article) }}" src="{{ article.image }}" alt="{{ article.image_alt or article.title }}" width="1200" height="800" loading="lazy" /></span>
     {% endif %}
     <div class="news-card-copy">
       <span class="eyebrow">{{ article.date|date_label }}</span>
@@ -24,3 +24,4 @@
     </a>
   </article>
 {% endmacro %}
+{% from '_stile-ritaglio.html' import stile_ritaglio %}

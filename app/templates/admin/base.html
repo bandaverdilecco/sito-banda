@@ -11,6 +11,7 @@
     <link rel="icon" href="/assets/Logo_filarmonica.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/admin.css">
     <script src="/admin.js" defer></script>
+    {% block head %}{% endblock %}
   </head>
   <body class="{% if not g.current_user %}login-page{% endif %}">
     <a class="skip-link" href="#contenuto">Vai al contenuto</a>

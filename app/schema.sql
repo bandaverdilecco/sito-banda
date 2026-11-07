@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS news (
   id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, date TEXT NOT NULL,
   summary TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '',
   image TEXT NOT NULL DEFAULT '', image_alt TEXT NOT NULL DEFAULT '', external_url TEXT NOT NULL DEFAULT '',
+  image_position TEXT NOT NULL DEFAULT '', image_zoom REAL NOT NULL DEFAULT 1 CHECK(image_zoom BETWEEN 1 AND 10),
   published INTEGER NOT NULL DEFAULT 1 CHECK(published IN (0,1))
 );
 CREATE TABLE IF NOT EXISTS albums (
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS photos (
   src TEXT NOT NULL, thumbnail TEXT NOT NULL DEFAULT '', original TEXT NOT NULL DEFAULT '',
   alt TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0,
   source TEXT NOT NULL DEFAULT 'upload',
+  image_position TEXT NOT NULL DEFAULT '', image_zoom REAL NOT NULL DEFAULT 1 CHECK(image_zoom BETWEEN 1 AND 10),
   published INTEGER NOT NULL DEFAULT 1 CHECK(published IN (0,1)), UNIQUE(album_id, src)
 );
 CREATE INDEX IF NOT EXISTS photos_album ON photos(album_id, sort_order);
@@ -56,6 +58,7 @@ CREATE TABLE IF NOT EXISTS teachers (
   id INTEGER PRIMARY KEY, name TEXT NOT NULL, instrument TEXT NOT NULL,
   image TEXT NOT NULL DEFAULT '', image_alt TEXT NOT NULL DEFAULT '',
   image_width INTEGER, image_height INTEGER, sort_order INTEGER NOT NULL DEFAULT 0,
+  image_position TEXT NOT NULL DEFAULT '', image_zoom REAL NOT NULL DEFAULT 1 CHECK(image_zoom BETWEEN 1 AND 10),
   published INTEGER NOT NULL DEFAULT 1 CHECK(published IN (0,1))
 );
 CREATE TABLE IF NOT EXISTS home_selection (

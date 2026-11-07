@@ -558,6 +558,14 @@ textarea {
   position: absolute;
   inset: -2px;
 }
+.circular-crop .crop-selection { border-radius: 50%; }
+.circular-crop .crop-selection::before { border-radius: 50%; }
+.circular-crop [data-corner] { display: none; }
+.cropped-image {
+  object-position: var(--crop-position, 50% 50%);
+  transform-origin: var(--crop-position, 50% 50%);
+  transform: var(--crop-transform, none);
+}
 .crop-selection [data-corner] {
   position: absolute;
   width: 16px;
@@ -698,22 +706,57 @@ input[type="number"] {
 .photo-card {
   border: 1px solid var(--line);
   border-radius: 3px;
-  overflow: hidden;
   background: #fffaf5;
 }
-.photo-card > img {
-  transition: opacity 150ms;
+.photo-card > .gallery-photo {
+  display: block;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px 2px 0 0;
+}
+.photo-card > .gallery-photo:hover img,
+.photo-card > .gallery-photo:focus-visible img {
+  transform: scale(calc(var(--crop-zoom, 1) * 1.035));
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-card > .gallery-photo img,
+  .photo-card > .gallery-photo:hover img,
+  .photo-card > .gallery-photo:focus-visible img {
+    transform: var(--crop-transform, none);
+    transition: none;
+  }
+}
+.photo-card > .gallery-photo img {
+  transition: opacity 150ms, transform 180ms ease;
   width: 100%;
   aspect-ratio: 4/3;
   object-fit: cover;
   background: var(--paper);
 }
-.photo-card.is-hidden > img {
+.photo-card.is-hidden > .gallery-photo img {
   opacity: 0.35;
 }
 .photo-visibility {
   margin: 0;
 }
+.photo-cover-button {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.photo-cover-button[aria-pressed="true"] {
+  color: white;
+  background: var(--accent);
+}
+.photo-cover-button:disabled { cursor: wait; }
+[data-photo-cover] { margin: 0; }
+[data-cover-error] { color: var(--accent); }
 .photo-visibility [hidden] {
   display: none;
 }
@@ -740,6 +783,7 @@ input[type="number"] {
   overflow-wrap: anywhere;
 }
 .photo-card .row-actions {
+  gap: 10px;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
@@ -1001,7 +1045,7 @@ input[type="number"] {
     padding: 13px;
   }
   .photo-card .row-actions {
-    gap: 14px;
+    gap: 8px;
     font-size: 0.74rem;
   }
   .sync-panel {

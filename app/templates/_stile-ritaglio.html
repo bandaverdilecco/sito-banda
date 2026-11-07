@@ -1,0 +1,3 @@
+{% macro stile_ritaglio(record) -%}
+--crop-position: {{ record.image_position or '50% 50%' }};{% if record.image_zoom > 1 %} --crop-zoom: {{ record.image_zoom }}; --crop-transform: scale({{ record.image_zoom }});{% endif %}
+{%- endmacro %}

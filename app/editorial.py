@@ -156,6 +156,7 @@ def _teacher_data(form, files, existing):
     data = {name: _text(form, name, required=name in ('name', 'instrument'))
             for name in ('name', 'instrument', 'image', 'image_alt')}
     upload = files.get('image_upload')
+    data.update(content.image_crop(form, existing))
     # Image writes happen only after every non-file field has passed validation.
     data['image'] = content.store_image(upload) if upload and upload.filename else content.image_url(data['image'])
     if existing and data['image'] == existing['image']:

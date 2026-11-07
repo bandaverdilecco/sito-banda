@@ -153,7 +153,7 @@ def create_app(test_config=None):
 
     @app.get('/<filename>')
     def static_file(filename):
-        if filename not in {'styles.css', 'gallery.js', 'back-to-top.js', 'section-index.js', 'admin.css', 'admin.js'}:
+        if filename not in {'styles.css', 'gallery.css', 'gallery.js', 'back-to-top.js', 'section-index.js', 'admin.css', 'admin.js'}:
             abort(404)
         return send_from_directory(ROOT / 'public', filename)
 

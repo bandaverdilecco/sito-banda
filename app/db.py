@@ -30,6 +30,12 @@ def init_db():
     db.execute('PRAGMA foreign_keys = OFF')
     try:
         db.execute('BEGIN IMMEDIATE')
+        for table in ('news', 'teachers', 'photos'):
+            columns = {row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
+            if 'image_position' not in columns:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN image_position TEXT NOT NULL DEFAULT ''")
+            if 'image_zoom' not in columns:
+                db.execute(f'ALTER TABLE {table} ADD COLUMN image_zoom REAL NOT NULL DEFAULT 1 CHECK(image_zoom BETWEEN 1 AND 10)')
         if 'cover_zoom' not in {row['name'] for row in db.execute('PRAGMA table_info(albums)')}:
             db.execute('ALTER TABLE albums ADD COLUMN cover_zoom REAL NOT NULL DEFAULT 1 CHECK(cover_zoom BETWEEN 1 AND 10)')
         if 'published' not in {row['name'] for row in db.execute('PRAGMA table_info(photos)')}:

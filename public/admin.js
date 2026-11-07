@@ -1,9 +1,10 @@
 /* A small progressive editor: content remains editable without JavaScript. */
 document.querySelectorAll('[data-cover-crop]').forEach((editor) => {
-  const field = document.getElementById('cover_position');
-  const zoomField = document.getElementById('cover_zoom');
-  const source = document.getElementById('cover');
-  const upload = document.getElementById('cover_upload');
+  const prefix = editor.dataset.prefix;
+  const field = document.getElementById(`${prefix}_position`);
+  const zoomField = document.getElementById(`${prefix}_zoom`);
+  const source = document.getElementById(editor.dataset.source);
+  const upload = document.getElementById(editor.dataset.upload);
   const frame = editor.querySelector('.cover-crop');
   const image = frame.querySelector('img');
   const selection = frame.querySelector('.crop-selection');
@@ -13,7 +14,8 @@ document.querySelectorAll('[data-cover-crop]').forEach((editor) => {
   if (position.length !== 2 || position.some(value => !Number.isFinite(value))) position = [50, 50];
   let zoom = Math.max(1, Math.min(10, Number(zoomField.value) || 1));
   let rect;
-  const ratio = 4 / 3;
+  const ratio = Number(editor.dataset.ratio);
+  const circular = editor.classList.contains('circular-crop');
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   let drag = null;
   let revision = 0;
@@ -90,6 +92,16 @@ document.querySelectorAll('[data-cover-crop]').forEach((editor) => {
     const w = maxWidth();
     move((image.naturalWidth - w) / 2, (image.naturalHeight - w / ratio) / 2, w);
   });
+  function circleEdge(event) {
+    if (!circular || !rect) return null;
+    const bounds = selection.getBoundingClientRect();
+    const dx = event.clientX - bounds.left - bounds.width / 2;
+    const dy = event.clientY - bounds.top - bounds.height / 2;
+    if (Math.abs(Math.hypot(dx, dy) - bounds.width / 2) > 8) return null;
+    return Math.abs(dx) > Math.abs(dy) * 2 ? 'ew-resize'
+      : Math.abs(dy) > Math.abs(dx) * 2 ? 'ns-resize'
+      : dx * dy > 0 ? 'nwse-resize' : 'nesw-resize';
+  }
   frame.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0 || !event.target.closest('.crop-selection')) return;
     event.preventDefault();
@@ -97,10 +109,29 @@ document.querySelectorAll('[data-cover-crop]').forEach((editor) => {
     frame.setPointerCapture(event.pointerId);
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, rect: { ...rect },
       corner: event.target.dataset.corner, scale: image.naturalWidth / frame.clientWidth };
+    if (circleEdge(event)) {
+      const bounds = frame.getBoundingClientRect();
+      const x = rect.x + rect.w / 2, y = rect.y + rect.w / 2;
+      drag.circle = { x, y, distance: Math.hypot((event.clientX - bounds.left) * drag.scale - x,
+        (event.clientY - bounds.top) * drag.scale - y) };
+    }
     frame.classList.add('is-dragging');
   });
   frame.addEventListener('pointermove', event => {
-    if (!drag || event.pointerId !== drag.id) return;
+    if (!drag) {
+      if (circular) selection.style.cursor = circleEdge(event) || 'grab';
+      return;
+    }
+    if (event.pointerId !== drag.id) return;
+    if (drag.circle) {
+      const bounds = frame.getBoundingClientRect();
+      const { x, y, distance } = drag.circle;
+      const radius = Math.hypot((event.clientX - bounds.left) * drag.scale - x,
+        (event.clientY - bounds.top) * drag.scale - y);
+      const maximum = Math.min(x, y, image.naturalWidth - x, image.naturalHeight - y) * 2;
+      const width = clamp(drag.rect.w + 2 * (radius - distance), maxWidth() / 10, maximum);
+      return move(x - width / 2, y - width / 2, width);
+    }
     const dx = (event.clientX - drag.x) * drag.scale;
     const dy = (event.clientY - drag.y) * drag.scale;
     const start = drag.rect;
@@ -277,7 +308,7 @@ document.querySelectorAll("form[data-photo-visibility]").forEach((form) => {
   const card = form.closest('.photo-card');
   const error = form.querySelector('[data-visibility-error]');
   let lastSaved = checkbox.checked;
-  form.querySelector('button[type="submit"]').hidden = true;
+  form.querySelector('button[type="submit"]:not([data-cover-button])').hidden = true;
   checkbox.addEventListener('change', () => form.requestSubmit());
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -299,6 +330,31 @@ document.querySelectorAll("form[data-photo-visibility]").forEach((form) => {
       error.hidden = false;
     } finally {
       checkbox.disabled = false;
+    }
+  });
+});
+
+document.querySelectorAll('form[data-photo-cover]').forEach((form) => {
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const buttons = [...document.querySelectorAll('[data-cover-button]')];
+    if (buttons.some(button => button.disabled)) return;
+    buttons.forEach(button => { button.disabled = true; });
+    const error = form.querySelector('[data-cover-error]');
+    error.hidden = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', body: new FormData(form), credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok || response.redirected) throw new Error('save_failed');
+      const result = await response.json();
+      if (String(result.photo_id) !== form.dataset.photoId) throw new Error('invalid_response');
+      buttons.forEach(button => button.setAttribute('aria-pressed', String(button.form === form)));
+    } catch {
+      error.hidden = false;
+    } finally {
+      buttons.forEach(button => { button.disabled = false; });
     }
   });
 });

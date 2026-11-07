@@ -20,12 +20,26 @@ SECTIONS = {
         fields=('title', 'slug', 'date', 'location', 'description', 'published'),
         required=('title', 'slug', 'date', 'location'), images=()),
     'notizie': dict(table='news',
-        fields=('title', 'slug', 'date', 'summary', 'body', 'external_url', 'image', 'image_alt', 'published'),
+        fields=('title', 'slug', 'date', 'summary', 'body', 'external_url', 'image', 'image_alt', 'image_position', 'image_zoom', 'published'),
         required=('title', 'slug', 'date', 'summary'), images=('image',)),
     'foto': dict(table='albums',
         fields=('title', 'slug', 'date', 'description', 'folder', 'cover', 'cover_alt', 'cover_position', 'cover_zoom', 'published'),
         required=('title', 'slug', 'date'), images=('cover',)),
 }
+
+
+def image_crop(form, existing=None):
+    existing = dict(existing) if existing else {}
+    position = form.get('image_position', existing.get('image_position', '')).strip()
+    if position and not re.fullmatch(r'-?\d+(?:\.\d+)?% -?\d+(?:\.\d+)?%', position):
+        raise ValueError('cover_crop_invalid')
+    try:
+        zoom = float(form.get('image_zoom') or existing.get('image_zoom', 1))
+        if not 1 <= zoom <= 10:
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise ValueError('cover_crop_invalid') from None
+    return {'image_position': position, 'image_zoom': zoom}
 
 
 def clean_body(value):
@@ -119,6 +133,7 @@ def validate_content(section, form, files, existing=None):
         else:
             valid_date(data['date'], allow_month=True)
     if 'body' in data:
+        data.update(image_crop(form, existing))
         data['body'] = clean_body(data['body'])
         data['external_url'] = https_url(data['external_url'])
         if not data['external_url'] and not bleach.clean(data['body'], tags=set(), strip=True).strip():
@@ -177,6 +192,7 @@ def save_photo(album_id, form, files, id=None):
     if len(alt) > 2000:
         raise ValueError('description_too_long')
     published = int(form.get('hidden', '') not in ('on', '1', 'true', 'yes'))
+    crop = image_crop(form, existing)
     file = files.get('image_upload')
     src = store_image(file) if file and file.filename else image_url(form.get('src', existing['src'] if existing else ''))
     if not src:
@@ -189,12 +205,12 @@ def save_photo(album_id, form, files, id=None):
         with db:
             db.execute('BEGIN IMMEDIATE')
             if existing:
-                db.execute('UPDATE photos SET src=?, thumbnail=?, original=?, alt=?, source=?, published=? WHERE id=? AND album_id=?',
-                           (src, thumbnail, original, alt, source, published, id, album_id))
+                db.execute('UPDATE photos SET src=?, thumbnail=?, original=?, alt=?, source=?, published=?, image_position=?, image_zoom=? WHERE id=? AND album_id=?',
+                           (src, thumbnail, original, alt, source, published, crop['image_position'], crop['image_zoom'], id, album_id))
                 return id
             position = db.execute('SELECT coalesce(max(sort_order),-1)+1 FROM photos WHERE album_id=?', (album_id,)).fetchone()[0]
-            return db.execute('INSERT INTO photos(album_id,src,thumbnail,original,alt,sort_order,source,published) VALUES(?,?,?,?,?,?,?,?)',
-                              (album_id, src, thumbnail, original, alt, position, source, published)).lastrowid
+            return db.execute('INSERT INTO photos(album_id,src,thumbnail,original,alt,sort_order,source,published,image_position,image_zoom) VALUES(?,?,?,?,?,?,?,?,?,?)',
+                              (album_id, src, thumbnail, original, alt, position, source, published, crop['image_position'], crop['image_zoom'])).lastrowid
     except sqlite3.IntegrityError as exc:
         raise ValueError('photo_duplicate') from exc
 
