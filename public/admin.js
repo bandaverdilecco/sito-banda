@@ -1,4 +1,137 @@
 /* A small progressive editor: content remains editable without JavaScript. */
+document.querySelectorAll('[data-cover-crop]').forEach((editor) => {
+  const field = document.getElementById('cover_position');
+  const zoomField = document.getElementById('cover_zoom');
+  const source = document.getElementById('cover');
+  const upload = document.getElementById('cover_upload');
+  const frame = editor.querySelector('.cover-crop');
+  const image = frame.querySelector('img');
+  const selection = frame.querySelector('.crop-selection');
+  const center = editor.querySelector('[data-crop-center]');
+  const messages = ['empty', 'loading', 'error'];
+  let position = (field.value || '50% 50%').split(/\s+/).map(parseFloat);
+  if (position.length !== 2 || position.some(value => !Number.isFinite(value))) position = [50, 50];
+  let zoom = Math.max(1, Math.min(10, Number(zoomField.value) || 1));
+  let rect;
+  const ratio = 4 / 3;
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  let drag = null;
+  let revision = 0;
+  let timer;
+
+  function status(name) {
+    messages.forEach(key => { editor.querySelector(`[data-crop-${key}]`).hidden = key !== name; });
+  }
+  function maxWidth() {
+    return Math.min(image.naturalWidth, image.naturalHeight * ratio);
+  }
+  function render(save = false) {
+    if (!rect) return;
+    selection.style.left = `${rect.x / image.naturalWidth * 100}%`;
+    selection.style.top = `${rect.y / image.naturalHeight * 100}%`;
+    selection.style.width = `${rect.w / image.naturalWidth * 100}%`;
+    selection.style.height = `${rect.w / ratio / image.naturalHeight * 100}%`;
+    if (save) {
+      position = [image.naturalWidth - rect.w > 0.001 ? rect.x / (image.naturalWidth - rect.w) * 100 : 50,
+        image.naturalHeight - rect.w / ratio > 0.001 ? rect.y / (image.naturalHeight - rect.w / ratio) * 100 : 50];
+      zoom = maxWidth() / rect.w;
+      field.value = position.map(value => `${Number(value.toFixed(6))}%`).join(' ');
+      zoomField.value = zoom.toFixed(6);
+    }
+  }
+  function move(x, y, w = rect.w) {
+    w = clamp(w, maxWidth() / 10, maxWidth());
+    rect = { x: clamp(x, 0, image.naturalWidth - w), y: clamp(y, 0, image.naturalHeight - w / ratio), w };
+    render(true);
+  }
+  function previewURL(value) {
+    value = value.trim();
+    if (value.startsWith('assets/')) value = '/' + value;
+    const url = new URL(value, location.origin);
+    if (!(url.protocol === 'https:' || (url.origin === location.origin && value.startsWith('/')))) throw new Error();
+    if (url.hostname === 'drive.google.com') {
+      const id = url.pathname.match(/^\/file\/d\/([\w-]+)/)?.[1] || url.searchParams.get('id');
+      if (!id || !/^[\w-]+$/.test(id)) throw new Error();
+      return `https://lh3.googleusercontent.com/d/${id}=s1600`;
+    }
+    return url.href;
+  }
+  function refresh() {
+    const current = ++revision;
+    frame.hidden = center.hidden = true;
+    image.removeAttribute('src');
+    const file = upload.files[0];
+    status(file || source.value.trim() ? 'loading' : 'empty');
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => { if (current === revision) image.src = reader.result; };
+      reader.onerror = () => { if (current === revision) status('error'); };
+      reader.readAsDataURL(file);
+    } else if (source.value.trim()) {
+      try { image.src = previewURL(source.value); } catch { status('error'); }
+    }
+  }
+  image.addEventListener('load', () => {
+    frame.hidden = center.hidden = false;
+    const w = maxWidth() / zoom;
+    rect = { w, x: (image.naturalWidth - w) * clamp(position[0], 0, 100) / 100,
+      y: (image.naturalHeight - w / ratio) * clamp(position[1], 0, 100) / 100 };
+    render();
+    status(null);
+  });
+  image.addEventListener('error', () => {
+    if (!image.hasAttribute('src')) return;
+    frame.hidden = center.hidden = true;
+    status('error');
+  });
+  source.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(refresh, 200); });
+  upload.addEventListener('change', refresh);
+  center.addEventListener('click', () => {
+    const w = maxWidth();
+    move((image.naturalWidth - w) / 2, (image.naturalHeight - w / ratio) / 2, w);
+  });
+  frame.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0 || !event.target.closest('.crop-selection')) return;
+    event.preventDefault();
+    frame.focus({ preventScroll: true });
+    frame.setPointerCapture(event.pointerId);
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, rect: { ...rect },
+      corner: event.target.dataset.corner, scale: image.naturalWidth / frame.clientWidth };
+    frame.classList.add('is-dragging');
+  });
+  frame.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dx = (event.clientX - drag.x) * drag.scale;
+    const dy = (event.clientY - drag.y) * drag.scale;
+    const start = drag.rect;
+    if (!drag.corner) return move(start.x + dx, start.y + dy);
+    const sx = drag.corner.includes('e') ? 1 : -1;
+    const sy = drag.corner.includes('s') ? 1 : -1;
+    const ax = start.x + (sx < 0 ? start.w : 0);
+    const ay = start.y + (sy < 0 ? start.w / ratio : 0);
+    const maximum = Math.min(sx > 0 ? image.naturalWidth - ax : ax,
+      (sy > 0 ? image.naturalHeight - ay : ay) * ratio);
+    const width = clamp(start.w + (sx * dx + sy * dy / ratio) / (1 + 1 / ratio ** 2), maxWidth() / 10, maximum);
+    move(sx > 0 ? ax : ax - width, sy > 0 ? ay : ay - width / ratio, width);
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    frame.addEventListener(type, () => { drag = null; frame.classList.remove('is-dragging'); });
+  }
+  frame.addEventListener('keydown', event => {
+    if (event.key === '+' || event.key === '-' || event.key === '=') {
+      event.preventDefault();
+      const w = clamp(rect.w * (event.key === '-' ? 0.95 : 1.05), maxWidth() / 10, maxWidth());
+      return move(rect.x + (rect.w - w) / 2, rect.y + (rect.w - w) / ratio / 2, w);
+    }
+    const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (!directions[event.key]) return;
+    event.preventDefault();
+    const step = maxWidth() * (event.shiftKey ? 0.05 : 0.01);
+    move(rect.x + directions[event.key][0] * step, rect.y + directions[event.key][1] * step);
+  });
+  refresh();
+});
+
 document.querySelectorAll("textarea[data-richtext]").forEach((textarea) => {
   const wrapper = document.createElement("div");
   wrapper.className = "rich-editor";

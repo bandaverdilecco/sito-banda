@@ -526,6 +526,54 @@ textarea {
   resize: vertical;
   display: block;
 }
+.cover-crop {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  background: var(--paper);
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  margin-bottom: 12px;
+}
+.cover-crop:focus,
+.cover-crop:focus-visible {
+  outline: none;
+}
+.cover-crop.is-dragging .crop-selection { cursor: grabbing; }
+.cover-crop img {
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+.crop-selection {
+  position: absolute;
+  outline: 2px solid white;
+  box-shadow: 0 0 0 1000px #0008;
+  cursor: grab;
+}
+.crop-selection::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+}
+.crop-selection [data-corner] {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: 2px solid white;
+}
+.crop-selection [data-corner]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+[data-corner="nw"] { left: 1px; top: 1px; cursor: nwse-resize; }
+[data-corner="ne"] { right: 1px; top: 1px; cursor: nesw-resize; }
+[data-corner="sw"] { left: 1px; bottom: 1px; cursor: nesw-resize; }
+[data-corner="se"] { right: 1px; bottom: 1px; cursor: nwse-resize; }
 .home-selection {
   min-width: 0;
   margin: 0 0 28px;

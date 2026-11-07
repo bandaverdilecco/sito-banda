@@ -206,8 +206,84 @@ def run():
                 page.get_by_label('Indirizzo breve').fill('album-prova-browser')
                 page.get_by_label('Date dell’album').fill('2026-10-06, 2026-10-07')
                 page.locator('[name="cover"]').fill('/assets/concert.jpg')
+                crop = page.locator('.cover-crop')
+                expect(crop).to_be_visible()
+                portrait = io.BytesIO()
+                Image.new('RGB', (600, 1000), '#762038').save(portrait, 'JPEG')
+                page.locator('#cover_upload').set_input_files(dict(name='copertina.jpg', mimeType='image/jpeg', buffer=portrait.getvalue()))
+                expect(crop.locator('img')).to_have_attribute('src', re.compile('^data:image/jpeg;'))
+                expect(crop).to_be_visible()
+                crop.scroll_into_view_if_needed()
+                selection = crop.locator('.crop-selection')
+                box = selection.bounding_box()
+                full = crop.locator('img').bounding_box()
+                assert abs(full['width'] / full['height'] - 600 / 1000) < 0.01
+                assert abs(box['width'] / box['height'] - 4 / 3) < 0.01
+                page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+                page.mouse.down()
+                page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2 - 60, steps=6)
+                page.mouse.up()
+                position = page.locator('#cover_position').input_value()
+                expect(crop).to_have_css('outline-style', 'none')
+                page.keyboard.press('Meta')
+                expect(crop).to_have_css('outline-style', 'none')
+                assert float(position.split()[1].rstrip('%')) < 50
+                page.get_by_role('button', name='Ripristina ritaglio').click()
+                expect(page.locator('#cover_position')).to_have_value('50% 50%')
+                crop.focus()
+                page.keyboard.press('ArrowUp')
+                handle = crop.locator('[data-corner="se"]')
+                expect(handle).to_have_css('width', '16px')
+                expect(handle).to_have_css('border-top-color', 'rgb(255, 255, 255)')
+                expect(handle).to_have_css('background-color', 'rgba(0, 0, 0, 0)')
+                handle.scroll_into_view_if_needed()
+                assert selection.evaluate('''el => {
+                    const r = el.getBoundingClientRect();
+                    return ['nw', 'ne', 'sw', 'se'].every(corner => {
+                        const x = corner.includes('e') ? r.right - 0.5 : r.left + 0.5;
+                        const y = corner.includes('s') ? r.bottom - 0.5 : r.top + 0.5;
+                        return document.elementFromPoint(x, y)?.dataset.corner === corner;
+                    });
+                }'''), 'The visual corner gaps must hit the resize handles'
+                corner = handle.bounding_box()
+                page.mouse.move(corner['x'] + corner['width'] + 0.5, corner['y'] + corner['height'] + 0.5)
+                page.mouse.down()
+                page.mouse.move(corner['x'] - 60, corner['y'] - 42, steps=6)
+                page.mouse.up()
+                saved_position = page.locator('#cover_position').input_value()
+                saved_zoom = page.locator('#cover_zoom').input_value()
+                assert float(saved_zoom) > 1
+                box = selection.bounding_box()
+                assert abs(box['width'] / box['height'] - 4 / 3) < 0.01
+                # The outline lies outside the selection box; its middle must drag.
+                edge_x, edge_y = box['x'] + box['width'] / 2, box['y'] - 1
+                page.mouse.move(edge_x, edge_y)
+                page.mouse.down()
+                page.mouse.move(edge_x + 20, edge_y + 20, steps=6)
+                page.mouse.up()
+                moved = selection.bounding_box()
+                assert abs(moved['x'] - box['x'] - 20) < 1
+                assert abs(moved['y'] - box['y'] - 20) < 1
+                expect(page.locator('#cover_zoom')).to_have_value(saved_zoom)
+                saved_position = page.locator('#cover_position').input_value()
                 page.get_by_role('button', name='Salva contenuto').click()
                 expect(page).to_have_url(re.compile(re.escape(origin) + r'/admin/foto/\d+/edit$'))
+                expect(page.locator('#cover_position')).to_have_value(saved_position)
+                expect(page.locator('#cover_zoom')).to_have_value(str(float(saved_zoom)))
+                page.set_viewport_size({'width': 390, 'height': 844})
+                crop.scroll_into_view_if_needed()
+                box = selection.bounding_box()
+                assert abs(box['width'] / box['height'] - 4 / 3) < 0.01
+                touch = context.new_cdp_session(page)
+                touch.send('Emulation.setTouchEmulationEnabled', {'enabled': True})
+                point = {'x': box['x'] + box['width'] / 2, 'y': box['y'] + box['height'] / 2}
+                touch.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [point]})
+                touch.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [dict(point, y=point['y'] - 40)]})
+                touch.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                assert float(page.locator('#cover_position').input_value().split()[1].rstrip('%')) < float(saved_position.split()[1].rstrip('%'))
+                touch.send('Emulation.setTouchEmulationEnabled', {'enabled': False})
+                touch.detach()
+                page.set_viewport_size({'width': 1440, 'height': 1000})
                 page.get_by_role('link', name='Gestisci le foto').click()
                 photo_page = page.url
                 image = io.BytesIO()
@@ -256,13 +332,16 @@ def run():
                 page.get_by_role('button', name='Salva modifiche').click()
                 page.goto(origin + '/foto')
                 album_card = page.locator('a.album-link[href="/foto/album-prova-browser"]')
+                actual_position = album_card.locator('img').evaluate('(el) => el.style.objectPosition')
+                assert all(abs(float(a.rstrip('%')) - float(b.rstrip('%'))) < 0.001
+                           for a, b in zip(actual_position.split(), saved_position.split()))
                 image_frame = album_card.locator('.card-image')
                 page.mouse.move(0, 0)
                 expect(image_frame).to_have_css('transform', 'none')
                 frame_before = image_frame.bounding_box()
                 album_card.locator('h3').hover()
                 expect(image_frame).to_have_css('transform', 'matrix(1.035, 0, 0, 1.035, 0, 0)')
-                expect(album_card.locator('img')).to_have_css('transform', 'none')
+                assert album_card.locator('img').evaluate('(el) => Math.abs(new DOMMatrix(getComputedStyle(el).transform).a - Number(el.style.transform.slice(6, -1))) < 0.00001')
                 frame_after = image_frame.bounding_box()
                 assert abs(frame_after['width'] - frame_before['width'] * 1.035) < 1
                 assert abs(frame_after['height'] - frame_before['height'] * 1.035) < 1

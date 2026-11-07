@@ -81,7 +81,6 @@
   </div>
   <div class="field">
     <label for="cover">Copertina</label>
-    {% if values.get('cover') %}<img class="image-preview" src="{{ values['cover'] if values['cover'].startswith('/') or '://' in values['cover'] else '/' ~ values['cover'] }}" alt="Immagine attuale">{% endif %}
     <input name="cover" id="cover" value="{{ values.get('cover', '') }}" placeholder="https://… oppure /assets/…">
     <p class="help">Link HTTPS (anche Google Drive) o percorso locale /assets/… o /uploads/….</p>
     <label class="upload-label" for="cover_upload">Oppure carica un’immagine</label>
@@ -93,9 +92,24 @@
     <input name="cover_alt" id="cover_alt" type="text" value="{{ values.get('cover_alt', '') }}">
   </div>
   <div class="field">
-    <label for="cover_position">Posizione della copertina</label>
-    <input name="cover_position" id="cover_position" type="text" value="{{ values.get('cover_position', '') }}" aria-describedby="cover_position-help">
-    <p class="help" id="cover_position-help">Posizione orizzontale e verticale: 50% 50% al centro, 50% 0% in alto; vuoto = centro.</p>
+    <span id="cover-position-label">Inquadratura della copertina</span>
+    <input name="cover_position" id="cover_position" type="hidden" value="{{ values.get('cover_position', '') }}">
+    <input name="cover_zoom" id="cover_zoom" type="hidden" value="{{ values.get('cover_zoom', 1) }}">
+    <p class="help" id="cover_position-help">Trascina il rettangolo e ridimensionalo dagli angoli. Formato fisso 4:3. Tastiera: frecce per spostarlo, + e − per ridimensionarlo.</p>
+    <div data-cover-crop>
+      <div class="cover-crop" role="group" tabindex="0" aria-labelledby="cover-position-label" aria-describedby="cover_position-help" hidden>
+        <img alt="Anteprima della copertina" draggable="false" referrerpolicy="no-referrer">
+        <div class="crop-selection">
+          <span data-corner="nw"></span><span data-corner="ne"></span>
+          <span data-corner="sw"></span><span data-corner="se"></span>
+        </div>
+      </div>
+      <p class="help" data-crop-empty>Seleziona un’immagine per vedere l’anteprima.</p>
+      <p class="help" data-crop-loading role="status" hidden>Caricamento dell’anteprima…</p>
+      <p class="help" data-crop-error role="status" hidden>Anteprima non disponibile. Controlla il collegamento o scegli un’altra immagine.</p>
+      <button class="button small secondary" type="button" data-crop-center hidden>Ripristina ritaglio</button>
+    </div>
+    <noscript><p class="help">Attiva JavaScript per modificare l’inquadratura.</p></noscript>
   </div>
   {% endif %}
   <div class="form-actions"><button class="button" type="submit">Salva {{ 'modifiche' if record else 'contenuto' }}</button><a class="button secondary" href="{{ url_for('admin.listing', section=section) }}">Annulla</a></div>

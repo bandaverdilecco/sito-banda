@@ -23,7 +23,7 @@ SECTIONS = {
         fields=('title', 'slug', 'date', 'summary', 'body', 'external_url', 'image', 'image_alt', 'published'),
         required=('title', 'slug', 'date', 'summary'), images=('image',)),
     'foto': dict(table='albums',
-        fields=('title', 'slug', 'date', 'description', 'folder', 'cover', 'cover_alt', 'cover_position', 'published'),
+        fields=('title', 'slug', 'date', 'description', 'folder', 'cover', 'cover_alt', 'cover_position', 'cover_zoom', 'published'),
         required=('title', 'slug', 'date'), images=('cover',)),
 }
 
@@ -124,6 +124,12 @@ def validate_content(section, form, files, existing=None):
         if not data['external_url'] and not bleach.clean(data['body'], tags=set(), strip=True).strip():
             raise ValueError('article_required')
     if 'folder' in data:
+        try:
+            data['cover_zoom'] = float(data['cover_zoom'] or (existing.get('cover_zoom', 1) if existing else 1))
+            if not 1 <= data['cover_zoom'] <= 10:
+                raise ValueError()
+        except ValueError:
+            raise ValueError('cover_crop_invalid') from None
         data['folder'] = folder_url(data['folder'])
         if data['cover_position'] and not re.fullmatch(r'-?\d+(?:\.\d+)?% -?\d+(?:\.\d+)?%', data['cover_position']):
             raise ValueError('cover_position_invalid')

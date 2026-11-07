@@ -407,7 +407,9 @@ class AppTests(unittest.TestCase):
                 self.assertEqual({field['name'] for field in form.select('[required]')}, set(spec['required']))
                 for field in form.select('[aria-describedby]'):
                     self.assertIsNotNone(form.find(id=field['aria-describedby']))
-        self.assertIn('50% 0% in alto', page.select_one('#cover_position-help').get_text())
+        self.assertIn('Trascina il rettangolo', page.select_one('#cover_position-help').get_text())
+        self.assertEqual(page.select_one('#cover_position')['type'], 'hidden')
+        self.assertIsNotNone(page.select_one('[data-cover-crop] .cover-crop'))
 
     def test_template_messages_render_validation_details_and_not_codes(self):
         response = self.submit('/admin', {'password': 'incorrect'}, expected=401)
@@ -797,6 +799,30 @@ class AppTests(unittest.TestCase):
             title = record["title"]
             self.assertIn(title, self.client.get(PUBLIC_PAGES[section]).get_data(as_text=True))
             self.assertEqual(self.client.get(f"/admin/{section}/{record['id']}/edit").status_code, 200)
+
+    def test_album_crop_zoom_is_validated_and_preserved(self):
+        self.login()
+        data = self.content_data('foto', 'crop')
+        for invalid in ('0', '-1', '11', 'nan', 'inf', 'invalid'):
+            self.submit('/admin/foto/new', dict(data, cover_zoom=invalid), expected=422)
+        response = self.submit('/admin/foto/new', dict(data, cover_zoom='2'))
+        album = self.rows('SELECT * FROM albums WHERE slug=?', (data['slug'],))[0]
+        self.assertEqual(album['cover_zoom'], 2)
+        self.submit(response.location, data)
+        self.assertEqual(self.row('albums', album['id'])['cover_zoom'], 2)
+        self.assertIn('transform: scale(2.0)', self.client.get('/foto').get_data(as_text=True))
+
+    def test_existing_albums_gain_default_crop_zoom(self):
+        from app.db import init_db
+        with self.app.app_context():
+            db = get_db()
+            before = [tuple(row) for row in db.execute('SELECT id,cover_position FROM albums')]
+            db.execute('ALTER TABLE albums DROP COLUMN cover_zoom')
+            db.commit()
+            init_db()
+            init_db()
+            self.assertEqual([tuple(row) for row in db.execute('SELECT id,cover_position FROM albums')], before)
+            self.assertTrue(all(row[0] == 1 for row in db.execute('SELECT cover_zoom FROM albums')))
 
     def test_new_album_syncs_drive_photos_only_on_creation(self):
         self.login()
