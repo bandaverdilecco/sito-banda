@@ -612,6 +612,25 @@ class AppTests(unittest.TestCase):
             self.assertTrue(self.rows('SELECT * FROM teachers WHERE image=?', (expected,)))
             self.assertIsNotNone(self.soup(self.client.get('/scuola-allievi')).find('img', src=expected))
 
+    def test_admin_and_public_album_order_match_for_equal_dates(self):
+        self.login()
+        with self.app.app_context():
+            db = get_db()
+            db.executemany('INSERT INTO albums(slug,title,date,published) VALUES(?,?,?,?)', [
+                ('same-first', 'Prima', '2040-06-02', 1),
+                ('same-hidden', 'Nascosta', '2040-06-02', 0),
+                ('same-second', 'Seconda', '2040-06-02,2040-06-04', 1),
+                ('newest', 'Recente', '2040-07-01', 1),
+            ])
+            db.commit()
+        admin = self.soup(self.client.get('/admin/foto'))
+        public = self.soup(self.client.get('/foto'))
+        admin_titles = [heading.get_text(strip=True) for heading in admin.select('.content-row:not(.is-unpublished) h2')]
+        public_titles = [heading.get_text(strip=True) for heading in public.select('.album-card h3')]
+        self.assertEqual(admin_titles, public_titles)
+        self.assertEqual(admin_titles[:3], ['Recente', 'Prima', 'Seconda'])
+        self.assertEqual(len(admin.select('.is-unpublished')), 1)
+
     def test_photo_can_become_cover_without_changing_visibility(self):
         self.login()
         photo = self.rows('SELECT * FROM photos ORDER BY id')[0]

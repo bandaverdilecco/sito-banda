@@ -146,7 +146,8 @@ def logout():
 def listing(section):
     config = _section(section)
     date_order = "substr(date,1,instr(date || ',',',')-1)" if section == 'foto' else 'date'
-    records = [dict(row) for row in get_db().execute(f"SELECT * FROM {config['table']} ORDER BY {date_order} DESC, id DESC").fetchall()]
+    id_order = 'ASC' if section == 'foto' else 'DESC'
+    records = [dict(row) for row in get_db().execute(f"SELECT * FROM {config['table']} ORDER BY {date_order} DESC, id {id_order}").fetchall()]
     return render_template("admin/elenco.html", section=section, records=records)
 
 
