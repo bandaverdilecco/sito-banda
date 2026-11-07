@@ -13,7 +13,7 @@
     <script src="/admin.js" defer></script>
     {% block head %}{% endblock %}
   </head>
-  <body class="{% if not g.current_user %}login-page{% endif %}">
+  <body class="{% if not g.current_user %}login-page{% endif %}"{% if request.method == 'POST' and error %} data-unsaved-form="true"{% endif %}>
     <a class="skip-link" href="#contenuto">Vai al contenuto</a>
     <header class="admin-header">
       <a class="brand" href="{{ url_for('admin.index') }}">

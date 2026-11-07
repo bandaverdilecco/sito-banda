@@ -50,6 +50,14 @@ def assert_caption_over_photo(viewer):
     }'''), 'Caption band must align with the rendered photo, with equal text padding'
 
 
+def assert_unsaved(page, expected):
+    assert page.evaluate('''() => {
+        const event = new Event('beforeunload', {cancelable: true});
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+    }''') == expected
+
+
 
 def run():
     output = Path('test-results')
@@ -71,6 +79,8 @@ def run():
                 browser = playwright.chromium.launch(executable_path=executable, headless=True)
                 context = browser.new_context(viewport={'width': 1440, 'height': 1000})
                 page = context.new_page()
+                # Some journeys intentionally discard an unsaved preview.
+                page.on('dialog', lambda dialog: dialog.accept() if dialog.type == 'beforeunload' else dialog.dismiss())
                 errors = []
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 # Only local assets affect layout assertions; external photo availability
@@ -638,6 +648,56 @@ def run():
                     assert float(zoom) > 1
                     page.get_by_role('button', name=re.compile('^Salva modifiche$')).click()
                     expect(page.locator('#image_zoom')).to_have_value(str(float(zoom)))
+                guard = context.new_page()
+                dialogs = []
+                def dismiss_leave(dialog):
+                    dialogs.append(dialog.type)
+                    dialog.dismiss()
+                guard.on('dialog', dismiss_leave)
+                news_edit = origin + f'/admin/notizie/{news_id}/edit'
+                guard.goto(news_edit)
+                assert_unsaved(guard, False)
+                title = guard.locator('#title')
+                original_title = title.input_value()
+                title.fill(original_title + ' modificata')
+                assert_unsaved(guard, True)
+                with guard.expect_event('dialog'):
+                    guard.locator('.admin-nav a').first.click(no_wait_after=True)
+                assert dialogs == ['beforeunload']
+                expect(guard).to_have_url(news_edit)
+                expect(title).to_have_value(original_title + ' modificata')
+                title.fill(original_title)
+                assert_unsaved(guard, False)
+                rich = guard.locator('.editor-content')
+                original_html = rich.inner_html()
+                rich.fill('Testo modificato non salvato')
+                assert_unsaved(guard, True)
+                rich.evaluate('(el, html) => el.innerHTML = html', original_html)
+                assert_unsaved(guard, False)
+                guard.locator('.cover-crop').focus()
+                guard.keyboard.press('-')
+                assert_unsaved(guard, True)
+                guard.get_by_role('button', name='Salva modifiche', exact=True).click()
+                expect(guard.locator('.notice.success')).to_be_visible()
+                assert dialogs == ['beforeunload'], 'Saving must not prompt'
+                assert_unsaved(guard, False)
+                guard.goto(origin + '/admin/home')
+                radio = guard.locator('input[name="news_id"]:not(:checked)').first
+                radio.check()
+                assert_unsaved(guard, True)
+                guard.get_by_role('button', name='Salva selezione').click()
+                expect(guard.locator('.notice.success')).to_be_visible()
+                assert_unsaved(guard, False)
+                guard.goto(photo_page)
+                hidden = guard.locator('[data-photo-visibility] input[type="checkbox"]').first
+                hidden.check()
+                expect(hidden).to_be_enabled()
+                assert_unsaved(guard, False)
+                guard.locator('#image_upload').set_input_files(dict(name='non-salvata.jpg', mimeType='image/jpeg', buffer=image.getvalue()))
+                assert_unsaved(guard, True)
+                guard.locator('#image_upload').set_input_files([])
+                assert_unsaved(guard, False)
+                guard.close()
                 page.goto(origin + '/admin')
                 page.get_by_role('button', name='Esci', exact=True).click()
                 expect(page.get_by_label('Password', exact=True)).to_be_visible()

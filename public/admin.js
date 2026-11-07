@@ -439,3 +439,38 @@ document.querySelectorAll("button[data-pending-label]").forEach((button) => {
     button.textContent = button.dataset.pendingLabel;
   });
 });
+
+// Compare actual form values, including crops and rich text, so undoing changes
+// restores the clean state. Autosaving controls are deliberately not tracked.
+(() => {
+  const forms = [...document.querySelectorAll('form.edit-form, .photo-add form')];
+  if (!forms.length) return;
+  function snapshot(form) {
+    const values = [...form.elements].filter(field =>
+      field.name && field.name !== 'csrf_token' && field.matches('input, textarea, select') &&
+      !['submit', 'button', 'reset'].includes(field.type)
+    ).map(field => {
+      if (field.type === 'file') {
+        return [field.name, [...field.files].map(file => [file.name, file.size, file.lastModified])];
+      }
+      if (field.type === 'checkbox' || field.type === 'radio') return [field.name, field.value, field.checked];
+      if (field.multiple) return [field.name, [...field.selectedOptions].map(option => option.value)];
+      return [field.name, field.value];
+    });
+    const richText = [...form.querySelectorAll('.editor-content')].map(editor => editor.innerHTML);
+    return JSON.stringify([values, richText]);
+  }
+  const initial = new Map(forms.map(form => [form, snapshot(form)]));
+  const rejectedSubmission = document.body.dataset.unsavedForm === 'true';
+  let submitting = null;
+  document.addEventListener('submit', event => {
+    // Runs after form validation and the rich-text editor's submit handler.
+    if (!event.defaultPrevented && forms.includes(event.target)) submitting = event.target;
+  });
+  window.addEventListener('pageshow', () => { submitting = null; });
+  window.addEventListener('beforeunload', event => {
+    if (!forms.some(form => form !== submitting && (rejectedSubmission || snapshot(form) !== initial.get(form)))) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+})();
