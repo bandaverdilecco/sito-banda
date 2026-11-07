@@ -58,6 +58,34 @@ def assert_unsaved(page, expected):
     }''') == expected
 
 
+def exercise_gallery_zoom(page, viewer):
+    image = viewer.locator('.photo-viewer-image')
+    reset = viewer.get_by_role('button', name='Ripristina zoom')
+    expect(image).to_be_visible()
+    bounds = image.bounding_box()
+    x, y = bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2
+    page.mouse.click(x, y)
+    expect(reset).to_have_text('300%')
+    page.mouse.click(x, y)
+    expect(reset).to_have_text('100%')
+    page.mouse.move(x, y)
+    page.mouse.wheel(0, -300)
+    expect(viewer).to_have_class(re.compile('is-zoomed'))
+    before = image.evaluate('el => new DOMMatrix(getComputedStyle(el).transform).e')
+    page.mouse.down()
+    page.mouse.move(x + 70, y + 20, steps=5)
+    page.mouse.up()
+    after = image.evaluate('el => new DOMMatrix(getComputedStyle(el).transform).e')
+    assert after > before
+    expect(viewer).to_be_visible()
+    reset.click()
+    expect(image).to_have_css('transform', 'none')
+    page.keyboard.press('+')
+    expect(reset).to_have_text('150%')
+    page.keyboard.press('0')
+    expect(reset).to_have_text('100%')
+
+
 
 def run():
     output = Path('test-results')
@@ -329,6 +357,7 @@ def run():
                 expect(admin_viewer.locator('.photo-viewer-image')).to_have_css('object-fit', 'contain')
                 expect(admin_viewer.locator('.photo-viewer-image')).to_have_css('opacity', '1')
                 expect(admin_viewer.locator('.photo-viewer-counter')).to_have_text('Foto 1 di 1')
+                exercise_gallery_zoom(page, admin_viewer)
                 page.keyboard.press('Escape')
                 expect(admin_viewer).not_to_be_visible()
                 expect(photo_card.locator('.gallery-photo')).to_be_focused()
@@ -439,8 +468,11 @@ def run():
                 expect(teacher_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
                 expect(teacher_viewer.locator('.photo-viewer-image')).to_have_css('object-fit', 'contain')
                 assert_caption_over_photo(teacher_viewer)
+                exercise_gallery_zoom(page, teacher_viewer)
+                teacher_viewer.get_by_role('button', name='Ingrandisci immagine', exact=True).click()
                 page.screenshot(path=output / 'teacher-gallery-desktop.png')
                 page.get_by_role('button', name='Foto successiva', exact=True).click()
+                expect(teacher_viewer.get_by_role('button', name='Ripristina zoom')).to_have_text('100%')
                 expect(teacher_viewer.locator('.photo-viewer-name')).to_have_text(teacher_photos.nth(1).get_attribute('data-caption-name'))
                 expect(teacher_viewer.locator('.photo-viewer-instrument')).to_have_text(teacher_photos.nth(1).get_attribute('data-caption-instrument'))
                 page.keyboard.press('ArrowLeft')
@@ -463,6 +495,24 @@ def run():
                 expect(touch_viewer.locator('.photo-viewer-instrument')).to_have_text('Violino')
                 assert_caption_over_photo(touch_viewer)
                 touch_page.screenshot(path=output / 'teacher-gallery-mobile.png')
+                touch_stage = touch_viewer.locator('.photo-viewer-stage').bounding_box()
+                cx = touch_stage['x'] + touch_stage['width'] / 2
+                cy = touch_stage['y'] + touch_stage['height'] / 2
+                touch_page.touchscreen.tap(cx, cy)
+                touch_page.touchscreen.tap(cx, cy)
+                touch_reset = touch_viewer.get_by_role('button', name='Ripristina zoom')
+                expect(touch_reset).to_have_text('300%')
+                touch_reset.tap()
+                gesture_session = touch_context.new_cdp_session(touch_page)
+                gesture_session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [
+                    {'x': cx - 30, 'y': cy, 'id': 1}, {'x': cx + 30, 'y': cy, 'id': 2}]})
+                gesture_session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [
+                    {'x': cx - 65, 'y': cy, 'id': 1}, {'x': cx + 65, 'y': cy, 'id': 2}]})
+                gesture_session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                assert int(touch_reset.inner_text().rstrip('%')) > 150
+                expect(touch_viewer).to_be_visible()
+                touch_reset.tap()
+                assert_caption_over_photo(touch_viewer)
                 # Mobile text enlargement can change the caption after image load.
                 touch_name = touch_viewer.locator('.photo-viewer-name')
                 touch_name.evaluate("el => el.style.fontSize = '28px'")
